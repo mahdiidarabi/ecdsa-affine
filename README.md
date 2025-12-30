@@ -5,6 +5,8 @@ A Golang implementation for recovering ECDSA private keys when nonces have an af
 Based on the paper: **"Breaking ECDSA with Two Affinely Related Nonces"**  
 by Jamie Gilchrist, William J. Buchanan, Keir Finlow-Bates (arXiv:2504.13737)
 
+The full paper PDF is included in this repository: [`2504.13737v1.pdf`](2504.13737v1.pdf)
+
 ---
 
 ## 📄 Paper Summary
@@ -466,6 +468,8 @@ Removes generated fixtures and build artifacts.
 ## 📚 References
 
 - **Paper**: "Breaking ECDSA with Two Affinely Related Nonces" (arXiv:2504.13737)
+  - **PDF**: [`2504.13737v1.pdf`](2504.13737v1.pdf) (included in this repository)
+  - **arXiv**: [https://arxiv.org/abs/2504.13737](https://arxiv.org/abs/2504.13737)
 - **Curve**: secp256k1 (SEC 2 standard)
 - **Standards**: FIPS 186-5 (Digital Signature Standard)
 

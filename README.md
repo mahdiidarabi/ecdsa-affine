@@ -8,6 +8,19 @@ This tool recovers ECDSA private keys from signatures with affinely related nonc
 
 ## Quick Start
 
+### As a Go Package
+
+```go
+import "github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine"
+
+client := ecdsaaffine.NewClient()
+result, err := client.RecoverKey(ctx, "signatures.json", "03...")
+```
+
+See [pkg/README.md](pkg/README.md) for detailed package documentation and examples.
+
+### As a CLI Tool
+
 ```bash
 # Build the recovery tool
 make build

@@ -71,6 +71,13 @@ def generate_fixtures():
     signatures_counter = signer.sign_with_counter_nonce(messages)
     signer.save_signatures(signatures_counter, 'test_signatures_counter.json')
     
+    # 2b. Hardcoded step for brute-force testing (k2 = k1 + 12345)
+    print("\n" + "="*70)
+    print("Generating: Hardcoded Step Nonces (k2 = k1 + 12345, k3 = k1 + 24690, ...)")
+    print("="*70)
+    signatures_hardcoded = signer.sign_with_hardcoded_step(messages, step=12345)
+    signer.save_signatures(signatures_hardcoded, 'test_signatures_hardcoded_step.json')
+    
     # 3. Affine relationship (k2 = 2*k1 + 1, k3 = 2*k2 + 1, ...)
     print("\n" + "="*70)
     print("Generating: Affine Relationship (k2 = 2*k1 + 1, k3 = 2*k2 + 1, ...)")
@@ -92,15 +99,16 @@ def generate_fixtures():
     print("\nGenerated files:")
     print("  - test_key_info.json (contains private key for verification)")
     print("  - test_signatures_same_nonce.json")
-    print("  - test_signatures_counter.json")
+    print("  - test_signatures_counter.json (k2 = k1 + 1)")
+    print("  - test_signatures_hardcoded_step.json (k2 = k1 + 12345, for brute-force testing)")
     print("  - test_signatures_affine.json")
     print("  - test_signatures_affine_3x_plus_5.json")
     print("\nYou can now use these fixtures to test key recovery with the Go tool:")
     print("  ./bin/recovery --signatures fixtures/test_signatures_same_nonce.json --known-a 1 --known-b 0")
     print("  ./bin/recovery --signatures fixtures/test_signatures_counter.json --known-a 1 --known-b 1")
     print("  ./bin/recovery --signatures fixtures/test_signatures_affine.json --known-a 2 --known-b 1")
-    print("\nOr use smart brute-force:")
-    print("  ./bin/recovery --signatures fixtures/test_signatures_counter.json --smart-brute")
+    print("\nOr use smart brute-force (recommended for testing brute-force):")
+    print("  ./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute")
 
 
 if __name__ == "__main__":

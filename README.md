@@ -17,7 +17,7 @@ make fixtures
 
 # Run recovery (example)
 PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_key_info.json'))['public_key_hex'])")
-./bin/recovery --signatures fixtures/test_signatures_counter.json --smart-brute --public-key $PUBKEY
+./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY
 
 # Or use the test script
 ./test_recovery.sh
@@ -68,7 +68,7 @@ Flags:
 **Known relationship:**
 ```bash
 ./bin/recovery \
-  --signatures fixtures/test_signatures_counter.json \
+  --signatures fixtures/test_signatures_hardcoded_step.json \
   --known-a 1 \
   --known-b 12345 \
   --public-key $PUBKEY
@@ -77,7 +77,7 @@ Flags:
 **Smart brute-force (recommended):**
 ```bash
 ./bin/recovery \
-  --signatures fixtures/test_signatures_counter.json \
+  --signatures fixtures/test_signatures_hardcoded_step.json \
   --smart-brute \
   --public-key $PUBKEY
 ```
@@ -85,7 +85,7 @@ Flags:
 **Custom brute-force:**
 ```bash
 ./bin/recovery \
-  --signatures fixtures/test_signatures_counter.json \
+  --signatures fixtures/test_signatures_hardcoded_step.json \
   --brute-force \
   --a-range 1,10 \
   --b-range -50000,50000 \

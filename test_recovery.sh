@@ -20,11 +20,11 @@ echo "✓ Fixtures generated"
 # Step 2: Check if files exist
 echo
 echo "Step 2: Checking files..."
-if [ ! -f "fixtures/test_signatures_counter.json" ]; then
-    echo "ERROR: fixtures/test_signatures_counter.json not found"
+if [ ! -f "fixtures/test_signatures_hardcoded_step.json" ]; then
+    echo "ERROR: fixtures/test_signatures_hardcoded_step.json not found"
     exit 1
 fi
-echo "✓ test_signatures_counter.json exists"
+echo "✓ test_signatures_hardcoded_step.json exists"
 
 if [ ! -f "fixtures/test_key_info.json" ]; then
     echo "ERROR: fixtures/test_key_info.json not found"
@@ -58,11 +58,11 @@ echo "✓ Recovery binary exists"
 # Step 5: Run recovery
 echo
 echo "Step 5: Running recovery..."
-echo "Command: ./bin/recovery --signatures fixtures/test_signatures_counter.json --smart-brute --public-key $PUBKEY"
+echo "Command: ./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY"
 echo
 
 timeout 600 ./bin/recovery \
-    --signatures fixtures/test_signatures_counter.json \
+    --signatures fixtures/test_signatures_hardcoded_step.json \
     --smart-brute \
     --public-key "$PUBKEY"
 

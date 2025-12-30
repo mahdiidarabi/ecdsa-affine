@@ -93,7 +93,7 @@ Result: ✅ Success (a=1, b=50)
 Time: < 1 second
 ```
 
-### Test 3: Large Step (b=12345)
+### Test 3: Large Step (b=12345) - Hardcoded Step
 ```
 Phase 0: Statistical analysis → No patterns
 Phase 1: Same nonce reuse → Not found
@@ -105,7 +105,7 @@ Result: ✅ Success (a=1, b=12345)
 Time: ~5-10 seconds
 ```
 
-### Final Test: Counter with step=12345
+### Final Test: Hardcoded Step (step=12345)
 ```
 All phases executed in order
 Phase 3c found the key successfully
@@ -146,7 +146,7 @@ Time: ~10-15 seconds
 # Or manually
 make fixtures
 PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_key_info.json'))['public_key_hex'])")
-./bin/recovery --signatures fixtures/test_signatures_counter.json --smart-brute --public-key $PUBKEY
+./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY
 ```
 
 ## Next Steps (Optional Enhancements)

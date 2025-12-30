@@ -177,9 +177,57 @@ class FlawedSigner:
         n = curve.order
         
         for i, message in enumerate(messages):
-            # Calculate nonce: k_i = k_1 + (i-1)
-            nonce = (start_nonce + i*123456) % n
-            # nonce = secrets.randbelow(CURVE_ORDER)
+            # Calculate nonce: k_i = k_0 + i (counter: k1 = k0 + 1, k2 = k0 + 2, ...)
+            # For pair (i, i+1): k_{i+1} = k_i + 1, so a=1, b=1
+            nonce = (start_nonce + i) % n
+            
+            z = self.hash_message(message)
+            r = (nonce * G).x() % n
+            s = (pow(nonce, -1, n) * (z + r * self.private_key)) % n
+            
+            signatures.append({
+                'message': message.decode('utf-8') if isinstance(message, bytes) else message,
+                'z': z,
+                'r': r,
+                's': s,
+                'nonce_index': i
+            })
+        
+        return signatures
+    
+    def sign_with_hardcoded_step(
+        self,
+        messages: List[bytes],
+        step: int,
+        start_nonce: Optional[int] = None
+    ) -> List[dict]:
+        """
+        Sign messages using nonces with a hardcoded step: k_i = k_0 + i*step
+        
+        This is useful for testing brute-force recovery with known step values.
+        For pair (i, i+1): k_{i+1} = k_i + step, so a=1, b=step
+        
+        Args:
+            messages: List of messages to sign
+            step: Step value for nonce generation (k_i = k_0 + i*step)
+            start_nonce: Optional starting nonce (generates random one if not provided)
+        
+        Returns:
+            List of signature dictionaries with z, r, s values
+        """
+        if start_nonce is None:
+            import secrets
+            start_nonce = secrets.randbelow(CURVE_ORDER)
+        
+        signatures = []
+        curve = SECP256k1
+        G = curve.generator
+        n = curve.order
+        
+        for i, message in enumerate(messages):
+            # Calculate nonce: k_i = k_0 + i*step
+            # For pair (0, 1): k1 = k0 + step, so a=1, b=step
+            nonce = (start_nonce + i * step) % n
             
             z = self.hash_message(message)
             r = (nonce * G).x() % n

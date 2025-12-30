@@ -178,7 +178,7 @@ class FlawedSigner:
         
         for i, message in enumerate(messages):
             # Calculate nonce: k_i = k_1 + (i-1)
-            nonce = (start_nonce + i*12345) % n
+            nonce = (start_nonce + i*123456) % n
             # nonce = secrets.randbelow(CURVE_ORDER)
             
             z = self.hash_message(message)

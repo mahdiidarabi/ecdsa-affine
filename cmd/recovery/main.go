@@ -154,7 +154,22 @@ func main() {
 		}
 
 	} else if *bruteForce {
-		// Brute-force
+		// Brute-force - try common patterns first for efficiency
+		fmt.Println("Trying common patterns first (fast path)...")
+		commonResult := bruteforce.SmartBruteForce(signatures, publicKeyBytes)
+		if commonResult != nil {
+			fmt.Printf("\n[+] Successfully recovered private key!\n")
+			fmt.Printf("    Private key: %s\n", commonResult.PrivateKey.String())
+			fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", commonResult.A.String(), commonResult.B.String())
+			fmt.Printf("    Signature pair: (%d, %d)\n", commonResult.SignaturePair[0], commonResult.SignaturePair[1])
+			if commonResult.Verified {
+				fmt.Println("    ✓ Verified against public key!")
+			}
+			return
+		}
+
+		// If common patterns didn't work, use specified ranges
+		fmt.Println("Common patterns didn't work, using specified ranges...")
 		aMin, aMax, err := parseRange(*aRange)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing a-range: %v\n", err)

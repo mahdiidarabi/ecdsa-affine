@@ -14,11 +14,11 @@ import (
 
 // WorkItem represents a single work item for brute-force search
 type WorkItem struct {
-	SigPair    [2]int
-	A          int
-	B          int
-	Sig1       *recovery.Signature
-	Sig2       *recovery.Signature
+	SigPair [2]int
+	A       int
+	B       int
+	Sig1    *recovery.Signature
+	Sig2    *recovery.Signature
 }
 
 // BruteForceAffineRelationshipParallel searches for affine relationships using parallel workers.
@@ -65,7 +65,9 @@ func BruteForceAffineRelationshipParallel(
 	defer cancel()
 
 	// Channels for work distribution and results
-	workChan := make(chan WorkItem, numWorkers*10) // Buffered channel
+	// Use a larger buffer to prevent blocking on work generation
+	// Buffer size: enough for several signature pairs worth of work items
+	workChan := make(chan WorkItem, numWorkers*100) // Larger buffer to prevent blocking
 	resultChan := make(chan *Result, 1)
 
 	// Counter for tested pairs
@@ -81,9 +83,13 @@ func BruteForceAffineRelationshipParallel(
 		}(i)
 	}
 
+	// Channel to signal when work generation is complete
+	workDone := make(chan struct{})
+
 	// Generate work items in a separate goroutine
 	go func() {
 		defer close(workChan)
+		defer close(workDone) // Signal that work generation is complete
 		pairsTested := 0
 
 		for i := 0; i < len(recoverySigs); i++ {
@@ -97,7 +103,40 @@ func BruteForceAffineRelationshipParallel(
 				sig2 := recoverySigs[j]
 
 				// Generate work items for this signature pair
+				// Prioritize a=1 first (most common: k2 = k1 + b)
+				// Then other small a values, then rest
+				aValues := make([]int, 0, aRange[1]-aRange[0]+1)
+
+				// Priority order: 1 first (most common), then 2, 3, then 0, then rest
+				// Note: a=0 is tested later because k2 = 0*k1 + b = b doesn't make sense
+				// and testing all b values for a=0 is wasteful
+				priorityA := []int{1, 2, 3}
+				for _, priority := range priorityA {
+					if aRange[0] <= priority && priority <= aRange[1] {
+						aValues = append(aValues, priority)
+					}
+				}
+
+				// Add remaining a values in order, but skip a=0 (wasteful)
+				// a=0 means k2 = 0*k1 + b = b, which doesn't make sense for affine relationships
 				for a := aRange[0]; a <= aRange[1]; a++ {
+					// Skip a=0 as it's wasteful (tests all b values with no meaningful relationship)
+					if a == 0 {
+						continue
+					}
+					isPriority := false
+					for _, p := range priorityA {
+						if a == p {
+							isPriority = true
+							break
+						}
+					}
+					if !isPriority {
+						aValues = append(aValues, a)
+					}
+				}
+
+				for _, a := range aValues {
 					// Check if context is cancelled (result found)
 					select {
 					case <-ctx.Done():
@@ -106,6 +145,14 @@ func BruteForceAffineRelationshipParallel(
 					}
 
 					for b := bRange[0]; b <= bRange[1]; b++ {
+						// Check if context is cancelled before sending
+						select {
+						case <-ctx.Done():
+							return
+						default:
+						}
+
+						// Try to send work item (non-blocking if possible, but allow blocking if buffer has space)
 						select {
 						case <-ctx.Done():
 							return
@@ -116,6 +163,7 @@ func BruteForceAffineRelationshipParallel(
 							Sig1:    sig1,
 							Sig2:    sig2,
 						}:
+							// Successfully sent
 						}
 					}
 				}
@@ -123,13 +171,28 @@ func BruteForceAffineRelationshipParallel(
 		}
 	}()
 
-	// Wait for result or completion
+	// Wait for result, completion, or all work done
 	select {
 	case result := <-resultChan:
-		cancel() // Cancel all workers
+		cancel()  // Cancel all workers
 		wg.Wait() // Wait for workers to finish
 		fmt.Printf("Tested %d combinations\n", atomic.LoadInt64(&testedPairs))
 		return result
+	case <-workDone:
+		// All work generated, wait for workers to finish
+		wg.Wait()
+		// Check if result was found (workers might have sent it just before workDone)
+		// Use a timeout to ensure we don't wait forever if a worker is stuck
+		select {
+		case result := <-resultChan:
+			fmt.Printf("Tested %d combinations\n", atomic.LoadInt64(&testedPairs))
+			return result
+		default:
+			// No result found after all work completed
+			fmt.Printf("Tested %d combinations\n", atomic.LoadInt64(&testedPairs))
+			fmt.Println("No affine relationship found in tested combinations")
+			return nil
+		}
 	case <-ctx.Done():
 		// This shouldn't happen, but handle it
 		wg.Wait()
@@ -166,6 +229,11 @@ func worker(
 				continue
 			}
 
+			// Fast check: key must be in valid range
+			if priv.Sign() <= 0 || priv.Cmp(recovery.Secp256k1CurveOrder) >= 0 {
+				continue
+			}
+
 			// If public key provided, verify
 			if len(publicKeyBytes) > 0 {
 				verified, err := recovery.VerifyRecoveredKey(priv, publicKeyBytes)
@@ -184,21 +252,19 @@ func worker(
 					return
 				}
 			} else {
-				// Without public key, return first valid-looking key
-				if priv.Sign() > 0 && priv.Cmp(recovery.Secp256k1CurveOrder) < 0 {
-					select {
-					case resultChan <- &Result{
-						PrivateKey:    priv,
-						A:             aBig,
-						B:             bBig,
-						SignaturePair: work.SigPair,
-						Verified:      false,
-					}:
-					case <-ctx.Done():
-						return
-					}
+				// Without public key, return first valid key
+				select {
+				case resultChan <- &Result{
+					PrivateKey:    priv,
+					A:             aBig,
+					B:             bBig,
+					SignaturePair: work.SigPair,
+					Verified:      false,
+				}:
+				case <-ctx.Done():
 					return
 				}
+				return
 			}
 
 			// Progress reporting (every 50000 combinations to reduce noise)
@@ -399,4 +465,3 @@ func BruteForceAffineRelationshipBatch(
 		return nil
 	}
 }
-

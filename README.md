@@ -1,18 +1,22 @@
-# ECDSA Affine Nonce Recovery
+# ECDSA/EdDSA Affine Nonce Recovery
 
-**Breaking ECDSA with Two Affinely Related Nonces** - A Go implementation of the key recovery attack described in [arXiv:2504.13737](2504.13737v1.pdf) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates.
+**Breaking ECDSA/EdDSA with Two Affinely Related Nonces** - A Go implementation of the key recovery attack described in [arXiv:2504.13737](2504.13737v1.pdf) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates.
 
 ## Overview
 
-This tool recovers ECDSA and EdDSA private keys from signatures with affinely related nonces (k₂ = a·k₁ + b). It implements a multi-phase brute-force strategy optimized for real-world vulnerabilities, including patterns seen in the UpBit 2025 hack.
+This tool recovers **ECDSA** and **EdDSA** private keys from signatures with affinely related nonces. It implements a multi-phase brute-force strategy optimized for real-world vulnerabilities, including patterns seen in the UpBit 2025 hack on Solana.
 
-**Note:** This project supports both:
-- **ECDSA** (secp256k1) - Standard random nonce vulnerabilities
-- **EdDSA** (Ed25519) - Flawed implementations using random nonces (non-standard)
+**Supported Algorithms:**
+- **ECDSA** (secp256k1) - Standard random nonce vulnerabilities (Bitcoin, Ethereum, etc.)
+- **EdDSA** (Ed25519) - Flawed implementations using random nonces (Solana, etc.)
+
+**Note:** Standard EdDSA uses deterministic nonces and is secure. This tool targets **flawed EdDSA implementations** that use random nonces, making them vulnerable to ECDSA-style attacks.
 
 ## Quick Start
 
 ### As a Go Package
+
+#### ECDSA (secp256k1)
 
 ```go
 import "github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine"
@@ -21,11 +25,7 @@ client := ecdsaaffine.NewClient()
 result, err := client.RecoverKey(ctx, "signatures.json", "03...")
 ```
 
-See [pkg/README.md](pkg/README.md) for detailed package documentation and examples.
-
-### EdDSA Support
-
-This project also includes EdDSA (Ed25519) key recovery for flawed implementations that use random nonces instead of deterministic ones:
+#### EdDSA (Ed25519)
 
 ```go
 import "github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine"
@@ -34,7 +34,7 @@ client := eddsaaffine.NewClient()
 result, err := client.RecoverKey(ctx, "eddsa_signatures.json", "public_key_hex")
 ```
 
-**See the [EdDSA Testing Guide](#eddsa-testing) section below for complete instructions.**
+See [pkg/README.md](pkg/README.md) for detailed package documentation and examples for both ECDSA and EdDSA.
 
 ### As a CLI Tool
 
@@ -136,13 +136,23 @@ Flags:
 
 ```
 .
-├── cmd/recovery/          # CLI tool
+├── cmd/recovery/          # CLI tool (ECDSA)
+├── examples/
+│   ├── basic/             # ECDSA example programs
+│   └── eddsa/             # EdDSA example programs
+├── pkg/
+│   ├── ecdsaaffine/       # ECDSA Go package
+│   └── eddsaaffine/       # EdDSA Go package
 ├── internal/
-│   ├── bruteforce/        # Multi-phase brute-force implementation
+│   ├── bruteforce/        # Multi-phase brute-force implementation (ECDSA)
 │   ├── parser/            # Signature parsing (JSON/CSV)
-│   └── recovery/          # Core recovery algorithm (Equation 7)
+│   └── recovery/          # Core recovery algorithm (ECDSA Equation 7)
 ├── scripts/               # Python scripts for fixture generation
+│   ├── flawed_signer.py   # ECDSA signature generator
+│   └── flawed_eddsa_signer.py  # EdDSA signature generator
 ├── fixtures/              # Generated test fixtures
+├── TESTING_EDDSA.md       # EdDSA testing guide
+├── UPBIT_INVESTIGATION.md # Solana/EdDSA investigation guide
 ├── BRUTE_FORCE_STRATEGY.md    # Detailed strategy documentation
 ├── IMPLEMENTATION_SUMMARY.md  # Implementation details
 └── 2504.13737v1.pdf      # Research paper
@@ -150,13 +160,23 @@ Flags:
 
 ## Technical Details
 
-### Recovery Formula (Equation 7)
+### ECDSA Recovery Formula (Equation 7)
 
-For two signatures with affinely related nonces (k₂ = a·k₁ + b):
+For two ECDSA signatures with affinely related nonces (k₂ = a·k₁ + b):
 
 ```
 priv = (a·s₂·z₁ - s₁·z₂ + b·s₁·s₂) / (r₂·s₁ - a·r₁·s₂) mod n
 ```
+
+### EdDSA Recovery Formula
+
+For two EdDSA signatures with affinely related nonces (r₂ = a·r₁ + b), where the EdDSA signature equation is s = r + H(R||A||M)·a:
+
+```
+a = (s₂ - a_coeff·s₁ - b_offset) / (h₂ - a_coeff·h₁) mod q
+```
+
+Where h = H(R||A||M) mod q (SHA-512 hash of R, public key A, and message M).
 
 ### Supported Patterns
 
@@ -174,13 +194,15 @@ priv = (a·s₂·z₁ - s₁·z₂ + b·s₁·s₂) / (r₂·s₁ - a·r₁·s�
 
 ## For Security Researchers
 
-This tool is designed for security research on ECDSA nonce vulnerabilities, including:
-- Analyzing blockchain transactions for nonce patterns
-- Testing ECDSA implementations for weaknesses
-- Researching historical attacks (e.g., UpBit 2025 hack)
+This tool is designed for security research on ECDSA and EdDSA nonce vulnerabilities, including:
+- Analyzing blockchain transactions for nonce patterns (Bitcoin, Ethereum, Solana, etc.)
+- Testing ECDSA/EdDSA implementations for weaknesses
+- Researching historical attacks (e.g., UpBit 2025 hack on Solana)
 - Educational purposes on cryptographic vulnerabilities
+- Investigating exchange hot wallet compromises
 
 **See [BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md) for detailed attack strategies.**
+**See [UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md) for Solana/EdDSA investigation guide.**
 
 ## Requirements
 
@@ -309,10 +331,27 @@ The example program automatically verifies recovered keys against the expected p
 
 ## Documentation
 
-- **[TESTING_EDDSA.md](TESTING_EDDSA.md)** - Complete guide for testing EdDSA key recovery
-- **[UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md)** - Complete guide for Solana EdDSA key recovery investigation
-- **[BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md)** - Detailed brute-force strategy documentation
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details
+This project includes comprehensive documentation for both ECDSA and EdDSA key recovery:
+
+### Core Documentation
+
+- **[pkg/README.md](pkg/README.md)** - Package documentation for both ECDSA and EdDSA Go packages with API reference and usage examples
+- **[TESTING_EDDSA.md](TESTING_EDDSA.md)** - Complete guide for testing EdDSA key recovery, including fixture generation and examples
+- **[UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md)** - Complete guide for Solana EdDSA key recovery investigation (UpBit 2025 hack)
+- **[BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md)** - Detailed brute-force strategy documentation with multi-phase approach
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details, test results, and performance characteristics
+- **[API_DESIGN.md](API_DESIGN.md)** - API design documentation and architecture decisions
+
+### Supporting Documentation
+
+- **[scripts/README.md](scripts/README.md)** - Documentation for Python scripts (ECDSA and EdDSA fixture generation)
+- **[scripts/QUICKSTART.md](scripts/QUICKSTART.md)** - Quick start guide for using the scripts and extracting signatures from blockchains
+- **[scripts/TEST_RESULTS.md](scripts/TEST_RESULTS.md)** - Test results and validation documentation
+- **[fixtures/README.md](fixtures/README.md)** - Documentation about test fixtures (ECDSA and EdDSA)
+
+### Research Paper
+
+- **[2504.13737v1.pdf](2504.13737v1.pdf)** - Original research paper: "Breaking ECDSA with Two Affinely Related Nonces" (arXiv:2504.13737) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates
 
 ## References
 

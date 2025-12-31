@@ -1,14 +1,27 @@
-# ECDSA Affine Package
+# ECDSA/EdDSA Affine Packages
 
-This package provides a clean, extensible API for recovering ECDSA private keys from signatures with affinely related nonces.
+This repository provides two Go packages for recovering private keys from signatures with affinely related nonces:
+
+1. **`pkg/ecdsaaffine`** - ECDSA (secp256k1) key recovery
+2. **`pkg/eddsaaffine`** - EdDSA (Ed25519) key recovery for flawed implementations
 
 ## Installation
+
+### ECDSA Package
 
 ```bash
 go get github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine
 ```
 
+### EdDSA Package
+
+```bash
+go get github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine
+```
+
 ## Quick Start
+
+### ECDSA (secp256k1)
 
 ```go
 import "github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine"
@@ -24,6 +37,26 @@ if err != nil {
 
 fmt.Printf("Recovered key: %s\n", result.PrivateKey.Text(16))
 ```
+
+### EdDSA (Ed25519)
+
+```go
+import "github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine"
+
+// Create a client
+client := eddsaaffine.NewClient()
+
+// Recover key (public key in hex format)
+result, err := client.RecoverKey(ctx, "eddsa_signatures.json", "public_key_hex")
+if err != nil {
+    log.Fatal(err)
+}
+
+fmt.Printf("Recovered key: %s\n", result.PrivateKey.Text(16))
+fmt.Printf("Pattern: %s\n", result.Pattern)
+```
+
+**Note:** EdDSA package targets flawed implementations that use random nonces instead of deterministic ones. Standard EdDSA uses deterministic nonces and is secure.
 
 ## Core Interfaces
 
@@ -81,9 +114,29 @@ strategy := ecdsaaffine.NewSmartBruteForceStrategy().
 
 ## Examples
 
-See `examples/basic/main.go` for complete examples.
+- **ECDSA**: See `examples/basic/main.go` for complete ECDSA examples
+- **EdDSA**: See `examples/eddsa/main.go` for complete EdDSA examples
+
+## Features (Both Packages)
+
+Both packages share similar APIs and features:
+
+- ✅ **Multi-phase brute-force strategy** - Optimized search from common patterns to wide ranges
+- ✅ **Parallel processing** - Configurable worker pools for fast brute-force
+- ✅ **Custom patterns** - Add your own patterns to test
+- ✅ **Range configuration** - Control search ranges and limits
+- ✅ **Progress logging** - Detailed logging of search progress
+- ✅ **Signature parsing** - JSON and CSV format support
+- ✅ **Key verification** - Optional public key verification
 
 ## API Reference
 
-See [godoc](https://pkg.go.dev/github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine) for full API documentation.
+- **ECDSA**: See [godoc](https://pkg.go.dev/github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine) for full ECDSA API documentation
+- **EdDSA**: See [godoc](https://pkg.go.dev/github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine) for full EdDSA API documentation
+
+## Documentation
+
+- **[README.md](../README.md)** - Main project documentation
+- **[TESTING_EDDSA.md](../TESTING_EDDSA.md)** - Complete EdDSA testing guide
+- **[UPBIT_INVESTIGATION.md](../UPBIT_INVESTIGATION.md)** - Solana/EdDSA investigation guide
 

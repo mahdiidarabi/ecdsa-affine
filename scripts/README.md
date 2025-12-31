@@ -21,7 +21,12 @@ python3 scripts/flawed_signer.py
 
 ### `flawed_eddsa_signer.py` - EdDSA Signature Generator
 
-Generates EdDSA (Ed25519) signatures with various nonce flaws. **Note:** Standard EdDSA uses deterministic nonces, but this script simulates flawed implementations that use random nonces (making them vulnerable to ECDSA-style attacks).
+Generates EdDSA (Ed25519) signatures with various nonce flaws for testing the EdDSA key recovery tool. 
+
+**Important:** Standard EdDSA uses deterministic nonces (SHA-512(private_key || message)) and is secure. This script simulates **flawed implementations** that use random nonces instead, making them vulnerable to ECDSA-style affine nonce attacks. This is useful for:
+- Testing the EdDSA key recovery implementation
+- Researching vulnerabilities in flawed EdDSA implementations
+- Investigating real-world attacks (e.g., UpBit 2025 hack on Solana)
 
 **Usage:**
 ```bash

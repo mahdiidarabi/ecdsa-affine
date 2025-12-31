@@ -4,7 +4,11 @@
 
 ## Overview
 
-This tool recovers ECDSA private keys from signatures with affinely related nonces (k₂ = a·k₁ + b). It implements a multi-phase brute-force strategy optimized for real-world vulnerabilities, including patterns seen in the UpBit 2025 hack.
+This tool recovers ECDSA and EdDSA private keys from signatures with affinely related nonces (k₂ = a·k₁ + b). It implements a multi-phase brute-force strategy optimized for real-world vulnerabilities, including patterns seen in the UpBit 2025 hack.
+
+**Note:** This project supports both:
+- **ECDSA** (secp256k1) - Standard random nonce vulnerabilities
+- **EdDSA** (Ed25519) - Flawed implementations using random nonces (non-standard)
 
 ## Quick Start
 
@@ -18,6 +22,19 @@ result, err := client.RecoverKey(ctx, "signatures.json", "03...")
 ```
 
 See [pkg/README.md](pkg/README.md) for detailed package documentation and examples.
+
+### EdDSA Support
+
+This project also includes EdDSA (Ed25519) key recovery for flawed implementations that use random nonces instead of deterministic ones:
+
+```go
+import "github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine"
+
+client := eddsaaffine.NewClient()
+result, err := client.RecoverKey(ctx, "eddsa_signatures.json", "public_key_hex")
+```
+
+**See the [EdDSA Testing Guide](#eddsa-testing) section below for complete instructions.**
 
 ### As a CLI Tool
 
@@ -175,8 +192,128 @@ This tool is designed for security research on ECDSA nonce vulnerabilities, incl
 
 This project is for educational and security research purposes.
 
+## EdDSA Testing
+
+### Generating Flawed EdDSA Signatures
+
+Generate test signatures with various nonce flaws:
+
+```bash
+# Generate EdDSA test fixtures
+python3 scripts/flawed_eddsa_signer.py
+```
+
+This creates the following test fixtures in `fixtures/`:
+- `test_eddsa_signatures_same_nonce.json` - Nonce reuse (r2 = r1)
+- `test_eddsa_signatures_counter.json` - Counter-based (r2 = r1 + 1)
+- `test_eddsa_signatures_affine.json` - Affine relationship (r2 = 2*r1 + 1)
+- `test_eddsa_signatures_hardcoded_step.json` - Hardcoded step (r2 = r1 + 12345)
+- `test_eddsa_key_info.json` - Private/public key information for verification
+
+**Note:** These signatures simulate flawed implementations that use random nonces instead of the standard EdDSA deterministic nonces.
+
+### Testing EdDSA Key Recovery
+
+#### Using the Example Program
+
+```bash
+# Get the public key
+PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_eddsa_key_info.json'))['public_key_hex'])")
+
+# Test same nonce reuse (fastest - should recover instantly)
+go run examples/eddsa/main.go fixtures/test_eddsa_signatures_same_nonce.json $PUBKEY
+
+# Test counter-based nonces
+go run examples/eddsa/main.go fixtures/test_eddsa_signatures_counter.json $PUBKEY
+
+# Test affine relationship
+go run examples/eddsa/main.go fixtures/test_eddsa_signatures_affine.json $PUBKEY
+
+# Test hardcoded step (may take longer)
+go run examples/eddsa/main.go fixtures/test_eddsa_signatures_hardcoded_step.json $PUBKEY
+```
+
+#### Using the Go Package Directly
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/mahdiidarabi/ecdsa-affine/pkg/eddsaaffine"
+)
+
+func main() {
+    client := eddsaaffine.NewClient()
+    
+    // Load public key (optional, for verification)
+    publicKeyHex := "253b7787d6bbd7d4db321e34b9de09b3672b1fdff8654244d05a6c032058fc33"
+    
+    // Recover key from signatures
+    ctx := context.Background()
+    result, err := client.RecoverKey(
+        ctx, 
+        "fixtures/test_eddsa_signatures_same_nonce.json",
+        publicKeyHex,
+    )
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Recovered key: %s\n", result.PrivateKey.Text(16))
+    fmt.Printf("Pattern: %s\n", result.Pattern)
+    fmt.Printf("Relationship: r2 = %s*r1 + %s\n",
+        result.Relationship.A.Text(10),
+        result.Relationship.B.Text(10))
+}
+```
+
+#### Custom Strategy Configuration
+
+```go
+strategy := eddsaaffine.NewSmartBruteForceStrategy().
+    WithRangeConfig(eddsaaffine.RangeConfig{
+        ARange:     [2]int{1, 10},
+        BRange:     [2]int{-50000, 50000},
+        MaxPairs:   1000,
+        NumWorkers: 8,
+    }).
+    WithPatternConfig(eddsaaffine.PatternConfig{
+        CustomPatterns: []eddsaaffine.Pattern{
+            {A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step"},
+        },
+    })
+
+client := eddsaaffine.NewClient().WithStrategy(strategy)
+result, err := client.RecoverKey(ctx, "signatures.json", publicKeyHex)
+```
+
+### Expected Results
+
+| Test Case | Pattern | Expected Recovery Time | Notes |
+|-----------|---------|----------------------|-------|
+| Same nonce | r2 = r1 | < 0.1s | Instant - Phase 0 |
+| Counter | r2 = r1 + 1 | < 1s | Common pattern - Phase 1 |
+| Affine | r2 = 2*r1 + 1 | < 1s | Common pattern - Phase 1 |
+| Hardcoded step | r2 = r1 + 12345 | 1-10s | Larger b value - Phase 2-3 |
+
+### Verification
+
+The example program automatically verifies recovered keys against the expected private key from `test_eddsa_key_info.json`. If the recovered key matches, you'll see:
+
+```
+✅ Key Recovery Successful!
+✅ Recovered key matches expected key!
+```
+
+## Documentation
+
+- **[TESTING_EDDSA.md](TESTING_EDDSA.md)** - Complete guide for testing EdDSA key recovery
+- **[UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md)** - Complete guide for Solana EdDSA key recovery investigation
+- **[BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md)** - Detailed brute-force strategy documentation
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details
+
 ## References
 
 - **Paper**: [Breaking ECDSA with Two Affinely Related Nonces](2504.13737v1.pdf) (arXiv:2504.13737)
-- **Strategy Guide**: [BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md)
-- **Implementation Details**: [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)

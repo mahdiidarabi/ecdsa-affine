@@ -2,17 +2,48 @@
 
 **Breaking ECDSA/EdDSA with Two Affinely Related Nonces** - A Go implementation of the key recovery attack described in [arXiv:2504.13737](2504.13737v1.pdf) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates.
 
-## Overview
+## 🔬 Overview
 
-This tool recovers **ECDSA** and **EdDSA** private keys from signatures with affinely related nonces. It implements a multi-phase brute-force strategy optimized for real-world vulnerabilities, including patterns seen in the UpBit 2025 hack on Solana.
+**This is a security research tool** for analyzing cryptographic vulnerabilities in ECDSA and EdDSA signature implementations. It recovers private keys from signatures with affinely related nonces, enabling researchers to:
+
+- **Test signature implementations** for nonce generation weaknesses
+- **Analyze blockchain transactions** for vulnerable nonce patterns
+- **Investigate real-world attacks** (e.g., UpBit 2025 Solana hack)
+- **Research cryptographic vulnerabilities** in production systems
+
+**⚠️ IMPORTANT: This tool is for legitimate security research only. Only use on systems you own or have explicit authorization to test.**
 
 **Supported Algorithms:**
 - **ECDSA** (secp256k1) - Standard random nonce vulnerabilities (Bitcoin, Ethereum, etc.)
-- **EdDSA** (Ed25519) - Flawed implementations using random nonces (Solana, etc.)
+- **EdDSA** (Ed25519) - **Flawed implementations** using random nonces (Solana, etc.)
 
-**Note:** Standard EdDSA uses deterministic nonces and is secure. This tool targets **flawed EdDSA implementations** that use random nonces, making them vulnerable to ECDSA-style attacks.
+**Note:** Standard EdDSA uses deterministic nonces and is secure. This tool targets **flawed EdDSA implementations** that use random nonces instead of deterministic ones, making them vulnerable to ECDSA-style attacks.
 
-## Quick Start
+### Research Workflow
+
+1. **Generate test fixtures** → Use provided scripts to create vulnerable signatures
+2. **Run recovery tests** → Use test scripts to verify functionality
+3. **Analyze real data** → Extract signatures from blockchain transactions or your implementations
+4. **Review documentation** → Study strategy guides and implementation details
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Go 1.21+** (required for building and running)
+- **Python 3.6+** (required for generating test fixtures)
+- Git (for cloning the repository)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/mahdiidarabi/ecdsa-affine.git
+cd ecdsa-affine
+
+# Install Python dependencies (for fixture generation)
+pip install -r scripts/requirements.txt
+```
 
 ### As a Go Package
 
@@ -38,39 +69,118 @@ See [pkg/README.md](pkg/README.md) for detailed package documentation and exampl
 
 ### As a CLI Tool
 
+**Recommended workflow for researchers:**
+
 ```bash
-# Build the recovery tool
+# 1. Build the ECDSA recovery tool
 make build
 
-# Generate test fixtures
+# 2. Generate test fixtures (ECDSA and EdDSA)
 make fixtures
 
-# Run recovery (example)
-PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_key_info.json'))['public_key_hex'])")
-./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY
-
-# Or use the test script
+# 3. Run ECDSA recovery test
 ./test_recovery.sh
+
+# 4. Run EdDSA recovery test
+./test_recovery_eddsa.sh
 ```
 
-## Features
+**Manual usage example:**
+```bash
+# Extract public key from fixtures (optional - for verification)
+PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_key_info.json'))['public_key_hex'])")
+
+# Run recovery with smart brute-force (recommended for unknown patterns)
+# With public key (verifies recovered key):
+./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY
+
+# Without public key (returns candidate keys without verification):
+./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute
+```
+
+**Note:** The `--public-key` flag is **optional**. The tool can recover private keys without knowing the public key. When provided, the public key is used to verify that the recovered key is correct. Without it, the tool returns candidate keys that appear valid (in the correct range) but need manual verification.
+
+## ✨ Features
 
 ### Multi-Phase Brute-Force Strategy
 
+The tool uses an optimized multi-phase approach to efficiently recover keys:
+
 1. **Phase 0: Statistical Analysis** - Pre-analyzes r values to detect patterns
-2. **Phase 1: Fast Checks** - Same nonce reuse detection + 40+ common patterns
+2. **Phase 1: Fast Checks** - **Same nonce reuse detection** + 40+ common patterns
 3. **Phase 2: Adaptive Search** - Progressive range expansion (7 phases)
 4. **Phase 3: Wide Search** - Large ranges for unusual patterns
 5. **Phase 4: Exhaustive** - Maximum range brute-force
 
 ### Key Capabilities
 
-- ✅ **Same nonce reuse detection** - Instant recovery (< 0.1s)
-- ✅ **Common pattern matching** - Covers 80% of real-world vulnerabilities
+- ✅ **Same nonce reuse detection** - **Instant recovery (< 0.1s)** - Most common vulnerability
+- ✅ **Common pattern matching** - **Covers 80% of real-world vulnerabilities**
 - ✅ **Adaptive range search** - Progressive expansion from small to large ranges
-- ✅ **Parallel processing** - 16+ workers for fast brute-force
+- ✅ **Parallel processing** - **16+ workers** for fast brute-force
 - ✅ **Early termination** - Stops immediately when key is found
 - ✅ **Statistical pre-analysis** - Detects patterns before brute-forcing
+- ✅ **Both ECDSA and EdDSA support** - Comprehensive algorithm coverage
+
+## Testing
+
+### Automated Test Scripts
+
+The project includes automated test scripts for easy validation:
+
+#### ECDSA Testing (`test_recovery.sh`)
+
+Tests ECDSA key recovery functionality:
+
+```bash
+./test_recovery.sh
+```
+
+**What it does:**
+- Generates ECDSA test fixtures with vulnerable nonce patterns
+- Runs the recovery tool with smart brute-force strategy
+- Verifies the recovered private key matches the expected key
+
+**Requirements:**
+- Python dependencies: `ecdsa` library
+- Go 1.21+ for building the recovery tool
+
+#### EdDSA Testing (`test_recovery_eddsa.sh`)
+
+Tests EdDSA key recovery functionality:
+
+```bash
+./test_recovery_eddsa.sh
+```
+
+**What it does:**
+- Generates EdDSA test fixtures with flawed nonce patterns (random nonces)
+- Runs the EdDSA recovery example program
+- Verifies the recovered private key matches the expected key
+
+**Requirements:**
+- Python dependencies: `PyNaCl` library
+- Go 1.21+ for running the example program
+
+**Note:** These scripts test **flawed EdDSA implementations** using random nonces. Standard EdDSA uses deterministic nonces and is not vulnerable.
+
+### Installing Python Dependencies
+
+Before running the test scripts, install the required Python dependencies:
+
+```bash
+# For Python 3.12+ (externally managed environments)
+python3 -m pip install --break-system-packages -r scripts/requirements.txt
+
+# For older Python versions
+pip install -r scripts/requirements.txt
+```
+
+Or install individually:
+```bash
+pip install ecdsa      # For ECDSA testing
+pip install PyNaCl     # For EdDSA testing
+```
 
 ## Usage
 
@@ -82,7 +192,7 @@ PUBKEY=$(python3 -c "import json; print(json.load(open('fixtures/test_key_info.j
 Flags:
   --signatures string     Path to signatures file (JSON or CSV)
   --format string         File format: json or csv (default: json)
-  --public-key string     Public key in hex (compressed, 66 chars) for verification
+  --public-key string     Public key in hex (compressed, 66 chars) for verification (OPTIONAL)
   --known-a int           Known affine coefficient a (k2 = a*k1 + b)
   --known-b int           Known affine offset b (k2 = a*k1 + b)
   --smart-brute           Use smart brute-force (recommended)
@@ -97,29 +207,44 @@ Flags:
 
 **Known relationship:**
 ```bash
+# With public key (verifies the result):
 ./bin/recovery \
   --signatures fixtures/test_signatures_hardcoded_step.json \
   --known-a 1 \
   --known-b 12345 \
   --public-key $PUBKEY
+
+# Without public key (returns candidate key):
+./bin/recovery \
+  --signatures fixtures/test_signatures_hardcoded_step.json \
+  --known-a 1 \
+  --known-b 12345
 ```
 
-**Smart brute-force (recommended):**
+**Smart brute-force (recommended for researchers):**
 ```bash
+# This is the RECOMMENDED option - tries common patterns first, then expands
+# With public key (verifies and stops when correct key found):
 ./bin/recovery \
   --signatures fixtures/test_signatures_hardcoded_step.json \
   --smart-brute \
   --public-key $PUBKEY
+
+# Without public key (returns first valid-looking candidate):
+./bin/recovery \
+  --signatures fixtures/test_signatures_hardcoded_step.json \
+  --smart-brute
 ```
 
 **Custom brute-force:**
 ```bash
+# With or without public key (optional for verification):
 ./bin/recovery \
   --signatures fixtures/test_signatures_hardcoded_step.json \
   --brute-force \
   --a-range 1,10 \
   --b-range -50000,50000 \
-  --public-key $PUBKEY
+  --public-key $PUBKEY  # Optional
 ```
 
 ## Performance
@@ -151,6 +276,8 @@ Flags:
 │   ├── flawed_signer.py   # ECDSA signature generator
 │   └── flawed_eddsa_signer.py  # EdDSA signature generator
 ├── fixtures/              # Generated test fixtures
+├── test_recovery.sh       # ECDSA automated test script
+├── test_recovery_eddsa.sh # EdDSA automated test script
 ├── TESTING_EDDSA.md       # EdDSA testing guide
 ├── UPBIT_INVESTIGATION.md # Solana/EdDSA investigation guide
 ├── BRUTE_FORCE_STRATEGY.md    # Detailed strategy documentation
@@ -192,27 +319,47 @@ Where h = H(R||A||M) mod q (SHA-512 hash of R, public key A, and message M).
 - Weak PRNGs: predictable patterns
 - Implementation bugs: nonce reuse, predictable increments
 
-## For Security Researchers
+## 🔬 For Security Researchers
 
-This tool is designed for security research on ECDSA and EdDSA nonce vulnerabilities, including:
-- Analyzing blockchain transactions for nonce patterns (Bitcoin, Ethereum, Solana, etc.)
-- Testing ECDSA/EdDSA implementations for weaknesses
-- Researching historical attacks (e.g., UpBit 2025 hack on Solana)
-- Educational purposes on cryptographic vulnerabilities
-- Investigating exchange hot wallet compromises
+**This tool is specifically designed for security research and educational purposes.** It enables researchers to:
 
-**See [BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md) for detailed attack strategies.**
-**See [UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md) for Solana/EdDSA investigation guide.**
+### Use Cases
 
-## Requirements
+- **🔍 Analyze blockchain transactions** - Detect nonce patterns in Bitcoin, Ethereum, Solana, and other blockchain networks
+- **🧪 Test signature implementations** - Identify weaknesses in ECDSA/EdDSA implementations before deployment
+- **📚 Research historical attacks** - Investigate real-world incidents (e.g., **UpBit 2025 hack on Solana**)
+- **🎓 Educational purposes** - Learn about cryptographic vulnerabilities and nonce generation weaknesses
+- **🔐 Security audits** - Assess the security of cryptographic systems and exchange hot wallets
 
-- Go 1.21+
-- Python 3.6+ (for fixture generation)
-- `github.com/decred/dcrd/dcrec/secp256k1/v4` (Go dependency)
+### Getting Started with Research
 
-## License
+1. **Generate test fixtures** - Use the provided scripts to create vulnerable signatures for testing
+2. **Run recovery tests** - Use the test scripts (`test_recovery.sh` for ECDSA, `test_recovery_eddsa.sh` for EdDSA)
+3. **Analyze your own data** - Extract signatures from blockchain transactions or your own implementations
+4. **Review documentation** - Study the strategy documentation and implementation details
 
-This project is for educational and security research purposes.
+### Important Documentation
+
+- **[BRUTE_FORCE_STRATEGY.md](BRUTE_FORCE_STRATEGY.md)** - **Detailed attack strategies and multi-phase approach**
+- **[UPBIT_INVESTIGATION.md](UPBIT_INVESTIGATION.md)** - **Complete guide for Solana/EdDSA investigation** (real-world case study)
+- **[TESTING_EDDSA.md](TESTING_EDDSA.md)** - EdDSA testing guide and examples
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details and performance characteristics
+
+### Research Paper
+
+The implementation is based on the paper: **[Breaking ECDSA with Two Affinely Related Nonces](2504.13737v1.pdf)** (arXiv:2504.13737) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates.
+
+**⚠️ ETHICAL USE WARNING:** Only use this tool on systems you own or have explicit written authorization to test. Unauthorized access to computer systems is illegal.
+
+## 📋 Requirements
+
+- **Go 1.21+** (required)
+- **Python 3.6+** (for fixture generation)
+- `github.com/decred/dcrd/dcrec/secp256k1/v4` (Go dependency - installed automatically)
+
+## 📝 License
+
+**This project is for educational and security research purposes only.**
 
 ## EdDSA Testing
 

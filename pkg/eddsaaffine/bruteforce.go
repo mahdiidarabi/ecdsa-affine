@@ -237,7 +237,7 @@ func (s *SmartBruteForceStrategy) adaptiveRangeSearch(ctx context.Context, signa
 		{[2]int{2, 4}, [2]int{-1000, 1000}, "Phase 3a: small a, medium b"},
 		{[2]int{-5, -1}, [2]int{-1000, 1000}, "Phase 3b: negative a, medium b"},
 		{[2]int{1, 10}, [2]int{-50000, 50000}, "Phase 3c: wider a, larger b"},
-		{[2]int{1, 100}, [2]int{-5000000, 5000000}, "Phase 4: very wide search"},
+		{[2]int{1, 100}, [2]int{-500000000, 500000000}, "Phase 4: very wide search"},
 	}
 
 	// Use the configured range if it's different from defaults
@@ -463,4 +463,3 @@ func (s *SmartBruteForceStrategy) rangeSearch(ctx context.Context, signatures []
 		return nil
 	}
 }
-

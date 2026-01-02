@@ -1,2 +1,7 @@
 # Python dependencies for fixture generation scripts
 
+# For ECDSA signature generation
+ecdsa>=0.18.0
+
+# For EdDSA (Ed25519) signature generation
+PyNaCl>=1.5.0

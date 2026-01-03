@@ -46,26 +46,38 @@ func (s *SmartBruteForceStrategy) Search(ctx context.Context, signatures []*Sign
 		return nil
 	}
 
+	fmt.Printf("Starting key recovery with %d signatures...\n", len(signatures))
+
 	// Phase 0: Check for same nonce reuse (fastest)
+	fmt.Println("Phase 0: Checking for same nonce reuse...")
 	if result := s.checkSameNonceReuse(signatures, publicKey); result != nil {
+		fmt.Println("✓ Found same nonce reuse!")
 		return result
 	}
+	fmt.Println("No same nonce reuse found")
 
 	// Phase 1: Try common patterns
 	if s.PatternConfig.IncludeCommonPatterns {
+		fmt.Println("Phase 1: Trying common patterns...")
 		if result := s.tryCommonPatterns(ctx, signatures, publicKey); result != nil {
+			fmt.Printf("✓ Found pattern: %s\n", result.Pattern)
 			return result
 		}
+		fmt.Println("No common patterns matched")
 	}
 
 	// Phase 2: Try custom patterns
 	if len(s.PatternConfig.CustomPatterns) > 0 {
+		fmt.Printf("Phase 2: Trying %d custom patterns...\n", len(s.PatternConfig.CustomPatterns))
 		if result := s.tryCustomPatterns(ctx, signatures, publicKey); result != nil {
+			fmt.Printf("✓ Found custom pattern: %s\n", result.Pattern)
 			return result
 		}
+		fmt.Println("No custom patterns matched")
 	}
 
 	// Phase 3: Adaptive range search
+	fmt.Println("Phase 3: Starting adaptive range search (brute-force)...")
 	return s.adaptiveRangeSearch(ctx, signatures, publicKey)
 }
 
@@ -212,17 +224,28 @@ func (s *SmartBruteForceStrategy) adaptiveRangeSearch(ctx context.Context, signa
 		default:
 		}
 
+		aCount := r.aRange[1] - r.aRange[0] + 1
+		if s.RangeConfig.SkipZeroA && r.aRange[0] <= 0 && r.aRange[1] >= 0 {
+			aCount--
+		}
+		bCount := r.bRange[1] - r.bRange[0] + 1
+		totalCombinations := aCount * bCount
+		fmt.Printf("%s: Testing a∈[%d,%d], b∈[%d,%d] (~%d combinations)...\n", r.name, r.aRange[0], r.aRange[1], r.bRange[0], r.bRange[1], totalCombinations)
+
 		if result := s.rangeSearch(ctx, signatures, publicKey, r.aRange, r.bRange, s.RangeConfig.MaxPairs, s.RangeConfig.NumWorkers); result != nil {
+			fmt.Printf("✓ Found key in %s!\n", r.name)
 			return result
 		}
+		fmt.Printf("No match in %s, continuing...\n", r.name)
 	}
 
+	fmt.Println("All phases completed, key not found")
 	return nil
 }
 
 // rangeSearch performs a brute-force search over a specific range.
 func (s *SmartBruteForceStrategy) rangeSearch(ctx context.Context, signatures []*Signature, publicKey []byte, aRange, bRange [2]int, maxPairs, numWorkers int) *RecoveryResult {
-	testedPairs := int64(0)
+	testedCombinations := int64(0)
 	resultChan := make(chan *RecoveryResult, 1)
 	workChan := make(chan [2]int, numWorkers*100)
 
@@ -267,7 +290,11 @@ func (s *SmartBruteForceStrategy) rangeSearch(ctx context.Context, signatures []
 							continue
 						}
 						for b := bRange[0]; b <= bRange[1]; b++ {
-							atomic.AddInt64(&testedPairs, 1)
+							combs := atomic.AddInt64(&testedCombinations, 1)
+							// Print progress every 10000 combinations
+							if combs%10000 == 0 {
+								fmt.Printf("  Tested %d combinations...\r", combs)
+							}
 							aBig := big.NewInt(int64(a))
 							bBig := big.NewInt(int64(b))
 
@@ -317,10 +344,18 @@ func (s *SmartBruteForceStrategy) rangeSearch(ctx context.Context, signatures []
 
 	select {
 	case result := <-resultChan:
+		finalCombs := atomic.LoadInt64(&testedCombinations)
+		if finalCombs > 0 {
+			fmt.Printf("\n  Tested %d combinations\n", finalCombs)
+		}
 		return result
 	case <-ctx.Done():
 		return nil
 	case <-done:
+		finalCombs := atomic.LoadInt64(&testedCombinations)
+		if finalCombs > 0 {
+			fmt.Printf("\n  Tested %d combinations\n", finalCombs)
+		}
 		return nil
 	}
 }

@@ -18,7 +18,7 @@ Successfully implemented the multi-phase brute-force strategy from `BRUTE_FORCE_
 - ✅ Correctly detects same nonce reuse
 - ✅ Provides useful pattern hints
 
-**Code Location:** `internal/bruteforce/brute_force.go:analyzeRValues()`
+**Code Location:** `pkg/ecdsaaffine/bruteforce.go` (multi-phase strategy implementation)
 
 ### ✅ Phase 1: Same Nonce Reuse Check
 **Status**: Implemented and tested
@@ -32,7 +32,7 @@ Successfully implemented the multi-phase brute-force strategy from `BRUTE_FORCE_
 - ✅ Test 1: Same nonce reuse detected instantly
 - ✅ Recovery successful with `a=1, b=0`
 
-**Code Location:** `internal/bruteforce/brute_force.go:SmartBruteForce()` (lines 130-184)
+**Code Location:** `pkg/ecdsaaffine/bruteforce.go:checkSameNonceReuse()`
 
 ### ✅ Phase 1: Common Patterns
 **Status**: Expanded and tested
@@ -49,7 +49,7 @@ Successfully implemented the multi-phase brute-force strategy from `BRUTE_FORCE_
 - ✅ All common patterns tested quickly
 - ✅ Covers 80% of real-world vulnerabilities
 
-**Code Location:** `internal/bruteforce/brute_force.go:SmartBruteForce()` (lines 188-232)
+**Code Location:** `pkg/ecdsaaffine/bruteforce.go:tryCommonPatterns()`
 
 ### ✅ Phase 2: Adaptive Range Search
 **Status**: Implemented and tested
@@ -71,7 +71,7 @@ Successfully implemented the multi-phase brute-force strategy from `BRUTE_FORCE_
 - ✅ Test 3: Large step (b=12345) found in Phase 3c (62367 combinations)
 - ✅ Counter test (step=12345) found in Phase 3c
 
-**Code Location:** `internal/bruteforce/brute_force.go:SmartBruteForce()` (lines 280-320)
+**Code Location:** `pkg/ecdsaaffine/bruteforce.go:adaptiveRangeSearch()`
 
 ## Test Results Summary
 

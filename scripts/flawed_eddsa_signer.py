@@ -286,8 +286,8 @@ def main():
     print(f"   Saved {len(affine_sigs)} signatures to fixtures/test_eddsa_signatures_affine.json")
     
     # 4. Hardcoded step (r_i = r_0 + i*12345)
-    print("4. Generating hardcoded step signatures (r_i = r_0 + i*123456789)...")
-    step_sigs = signer.sign_with_hardcoded_step(messages, step=123456789)
+    print("4. Generating hardcoded step signatures (r_i = r_0 + i*689765)...")
+    step_sigs = signer.sign_with_hardcoded_step(messages, step=689765)
     with open('fixtures/test_eddsa_signatures_hardcoded_step.json', 'w') as f:
         json.dump(step_sigs, f, indent=2)
     print(f"   Saved {len(step_sigs)} signatures to fixtures/test_eddsa_signatures_hardcoded_step.json")

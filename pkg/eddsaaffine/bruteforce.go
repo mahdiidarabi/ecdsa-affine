@@ -124,19 +124,38 @@ func (s *SmartBruteForceStrategy) checkSameNonceReuse(signatures []*Signature, p
 	return nil
 }
 
-// getCommonPatterns returns a list of common patterns to test.
+// getCommonPatterns returns the list of common patterns to try.
+// This matches the ECDSA implementation for consistency.
 func (s *SmartBruteForceStrategy) getCommonPatterns() []Pattern {
 	return []Pattern{
 		{big.NewInt(1), big.NewInt(0), "same_nonce", 1},
-		{big.NewInt(1), big.NewInt(1), "counter_plus_1", 2},
-		{big.NewInt(1), big.NewInt(-1), "counter_minus_1", 3},
-		{big.NewInt(1), big.NewInt(2), "step_2", 4},
-		{big.NewInt(1), big.NewInt(10), "step_10", 5},
-		{big.NewInt(1), big.NewInt(100), "step_100", 6},
-		{big.NewInt(1), big.NewInt(123), "step_123", 7},
-		{big.NewInt(1), big.NewInt(12345), "step_12345", 8},
-		{big.NewInt(2), big.NewInt(0), "double", 9},
-		{big.NewInt(2), big.NewInt(1), "double_plus_1", 10},
+		{big.NewInt(1), big.NewInt(1), "counter_+1", 2},
+		{big.NewInt(1), big.NewInt(-1), "counter_-1", 2},
+		{big.NewInt(1), big.NewInt(2), "counter_+2", 3},
+		{big.NewInt(1), big.NewInt(-2), "counter_-2", 3},
+		{big.NewInt(1), big.NewInt(3), "counter_+3", 3},
+		{big.NewInt(1), big.NewInt(-3), "counter_-3", 3},
+		{big.NewInt(1), big.NewInt(4), "counter_+4", 3},
+		{big.NewInt(1), big.NewInt(-4), "counter_-4", 3},
+		{big.NewInt(1), big.NewInt(5), "counter_+5", 3},
+		{big.NewInt(1), big.NewInt(-5), "counter_-5", 3},
+		{big.NewInt(1), big.NewInt(8), "step_8", 4},
+		{big.NewInt(1), big.NewInt(16), "step_16", 4},
+		{big.NewInt(1), big.NewInt(32), "step_32", 4},
+		{big.NewInt(1), big.NewInt(64), "step_64", 4},
+		{big.NewInt(1), big.NewInt(128), "step_128", 4},
+		{big.NewInt(1), big.NewInt(256), "step_256", 4},
+		{big.NewInt(1), big.NewInt(512), "step_512", 4},
+		{big.NewInt(1), big.NewInt(1024), "step_1024", 4},
+		{big.NewInt(1), big.NewInt(10), "step_10", 4},
+		{big.NewInt(1), big.NewInt(100), "step_100", 4},
+		{big.NewInt(1), big.NewInt(1000), "step_1000", 4},
+		{big.NewInt(1), big.NewInt(10000), "step_10000", 4},
+		{big.NewInt(2), big.NewInt(0), "multiply_2", 5},
+		{big.NewInt(2), big.NewInt(1), "multiply_2_+1", 5},
+		{big.NewInt(3), big.NewInt(0), "multiply_3", 5},
+		{big.NewInt(4), big.NewInt(0), "multiply_4", 5},
+		{big.NewInt(-1), big.NewInt(0), "negate", 6},
 	}
 }
 

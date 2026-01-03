@@ -73,9 +73,9 @@ def generate_fixtures():
     
     # 2b. Hardcoded step for brute-force testing (k2 = k1 + 12345)
     print("\n" + "="*70)
-    print("Generating: Hardcoded Step Nonces (k2 = k1 + 12345, k3 = k1 + 675432, ...)")
+    print("Generating: Hardcoded Step Nonces (k2 = k1 + 12345, k3 = k1 + 24690, ...)")
     print("="*70)
-    signatures_hardcoded = signer.sign_with_hardcoded_step(messages, step=675432)
+    signatures_hardcoded = signer.sign_with_hardcoded_step(messages, step=123456789)
     signer.save_signatures(signatures_hardcoded, 'test_signatures_hardcoded_step.json')
     
     # 3. Affine relationship (k2 = 2*k1 + 1, k3 = 2*k2 + 1, ...)

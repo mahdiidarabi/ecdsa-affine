@@ -266,8 +266,12 @@ Flags:
 │   ├── basic/             # ECDSA example programs
 │   └── eddsa/             # EdDSA example programs
 ├── pkg/
-│   ├── ecdsaaffine/       # ECDSA Go package (multi-phase brute-force, parsing, recovery)
+│   ├── ecdsaaffine/       # ECDSA Go package
 │   └── eddsaaffine/       # EdDSA Go package
+├── internal/
+│   ├── bruteforce/        # Multi-phase brute-force implementation (ECDSA)
+│   ├── parser/            # Signature parsing (JSON/CSV)
+│   └── recovery/          # Core recovery algorithm (ECDSA Equation 7)
 ├── scripts/               # Python scripts for fixture generation
 │   ├── flawed_signer.py   # ECDSA signature generator
 │   └── flawed_eddsa_signer.py  # EdDSA signature generator

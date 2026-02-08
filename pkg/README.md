@@ -119,15 +119,16 @@ strategy := ecdsaaffine.NewSmartBruteForceStrategy().
 
 ## Features (Both Packages)
 
-Both packages share similar APIs and features:
+Both packages share **identical APIs and features** with unified structure:
 
 - ✅ **Multi-phase brute-force strategy** - Optimized search from common patterns to wide ranges
 - ✅ **Parallel processing** - Configurable worker pools for fast brute-force
 - ✅ **Custom patterns** - Add your own patterns to test
 - ✅ **Range configuration** - Control search ranges and limits
-- ✅ **Progress logging** - Detailed logging of search progress
+- ✅ **Progress logging** - Detailed logging with updates every 5 seconds or 1M pairs checked
 - ✅ **Signature parsing** - JSON and CSV format support
 - ✅ **Key verification** - Optional public key verification
+- ✅ **Unified structure** - Both ECDSA and EdDSA use the same code structure and logging format
 
 ## API Reference
 

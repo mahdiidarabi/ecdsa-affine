@@ -4,6 +4,8 @@ import (
 	"crypto/sha512"
 	"errors"
 	"math/big"
+
+	"filippo.io/edwards25519"
 )
 
 // Ed25519CurveOrder is the order of the Ed25519 curve
@@ -129,15 +131,18 @@ func HashMessage(message []byte) []byte {
 
 // VerifyRecoveredKey verifies that a recovered private key matches the given public key.
 //
-// Note: Full Ed25519 verification is complex. This is a simplified check.
-// For production use, use a proper Ed25519 library.
+// In Ed25519, the private key is a scalar 'a', and the public key is computed as:
+// A = a * B, where B is the base point.
+//
+// The recovered scalar is already mod curve order from the recovery algorithm.
+// We use SetUniformBytes which requires 64 bytes (padded from 32 bytes).
 //
 // Args:
-//   - privateKey: Recovered private key
+//   - privateKey: Recovered private key scalar
 //   - publicKey: Expected public key (32 bytes, compressed format)
 //
 // Returns:
-//   - True if key appears valid, false otherwise
+//   - True if the private key matches the public key, false otherwise
 //   - Error if verification fails
 func VerifyRecoveredKey(privateKey *big.Int, publicKey []byte) (bool, error) {
 	if len(publicKey) != 32 {
@@ -149,9 +154,32 @@ func VerifyRecoveredKey(privateKey *big.Int, publicKey []byte) (bool, error) {
 		return false, errors.New("private key out of valid range")
 	}
 
-	// TODO: Implement full Ed25519 point multiplication to verify
-	// For now, just check that key is in valid range
-	// In production, use: publicKey = privateKey * basePoint
+	// Convert private key scalar to 32 bytes (little-endian)
+	privKeyBytes := make([]byte, 32)
+	privKeyBE := privateKey.Bytes()
+	// Copy to little-endian format (reverse bytes)
+	for i := 0; i < len(privKeyBE) && i < 32; i++ {
+		privKeyBytes[i] = privKeyBE[len(privKeyBE)-1-i]
+	}
 
-	return true, nil
+	// Pad to 64 bytes for SetUniformBytes (required by edwards25519)
+	privKeyBytes64 := make([]byte, 64)
+	copy(privKeyBytes64, privKeyBytes) // Copy 32 bytes, rest are zeros (little-endian)
+
+	privScalar, err := edwards25519.NewScalar().SetUniformBytes(privKeyBytes64)
+	if err != nil {
+		return false, err
+	}
+
+	// Compute public key: A = a * B (where B is the base point)
+	computedPubKey := edwards25519.NewIdentityPoint().ScalarBaseMult(privScalar)
+
+	// Parse expected public key
+	expectedPubKey, err := edwards25519.NewIdentityPoint().SetBytes(publicKey)
+	if err != nil {
+		return false, err
+	}
+
+	// Compare computed and expected public keys
+	return computedPubKey.Equal(expectedPubKey) == 1, nil
 }

@@ -18,7 +18,9 @@ type Client struct {
 func NewClient() *Client {
 	return &Client{
 		strategy: NewSmartBruteForceStrategy(),
-		parser:   &JSONParser{},
+		parser: &JSONParser{
+			ZField: "z", // Use "z" field if present, otherwise hash "message" field
+		},
 	}
 }
 
@@ -118,6 +120,7 @@ func (c *Client) RecoverKeyWithKnownRelationship(ctx context.Context, source str
 				continue
 			}
 
+			// Verify recovered key against public key (required for real-world use)
 			verified := false
 			if len(publicKey) > 0 {
 				verified, _ = VerifyRecoveredKey(priv, publicKey)
@@ -125,11 +128,9 @@ func (c *Client) RecoverKeyWithKnownRelationship(ctx context.Context, source str
 					continue
 				}
 			} else {
-				// Check if key is in valid range
-				if priv.Sign() <= 0 || priv.Cmp(Secp256k1CurveOrder) >= 0 {
-					continue
-				}
-				verified = true
+				// No public key provided - cannot verify in real-world scenario
+				// Set verified to false since we cannot confirm the key is correct
+				verified = false
 			}
 
 			return &RecoveryResult{

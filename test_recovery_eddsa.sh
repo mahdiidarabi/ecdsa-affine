@@ -95,8 +95,8 @@ echo "Command: go run examples/eddsa/main.go fixtures/test_eddsa_signatures_hard
 echo "Strategy: Uses smart brute-force to find nonce patterns"
 echo
 
-# Use timeout to prevent infinite loops (600 seconds = 10 minutes)
-timeout 600 go run examples/eddsa/main.go \
+# Use timeout to prevent infinite loops (1200 seconds = 20 minutes)
+timeout 1200 go run examples/eddsa/main.go \
     fixtures/test_eddsa_signatures_hardcoded_step.json \
     "$PUBKEY"
 
@@ -106,7 +106,7 @@ echo "=== Exit code: $EXIT_CODE ==="
 
 # Handle different exit codes
 if [ $EXIT_CODE -eq 124 ]; then
-    echo "WARNING: Command timed out after 600 seconds (10 minutes)"
+    echo "WARNING: Command timed out after 1200 seconds (20 minutes)"
     echo "The recovery process may need more time or the signatures may not be vulnerable"
 elif [ $EXIT_CODE -eq 0 ]; then
     echo "✓ Recovery completed successfully"

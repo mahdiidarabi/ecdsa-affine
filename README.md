@@ -115,12 +115,13 @@ The tool uses an optimized multi-phase approach to efficiently recover keys:
 ### Key Capabilities
 
 - ✅ **Same nonce reuse detection** - **Instant recovery (< 0.1s)** - Most common vulnerability
-- ✅ **Common pattern matching** - **Covers 80% of real-world vulnerabilities**
+- ✅ **Common pattern matching** - **Covers 80% of real-world vulnerabilities** (31+ patterns)
 - ✅ **Adaptive range search** - Progressive expansion from small to large ranges
-- ✅ **Parallel processing** - **16+ workers** for fast brute-force
+- ✅ **Parallel processing** - **Configurable workers** for fast brute-force
+- ✅ **Progress logging** - **Updates every 5 seconds or 1M pairs** - Never appears stuck
 - ✅ **Early termination** - Stops immediately when key is found
-- ✅ **Statistical pre-analysis** - Detects patterns before brute-forcing
-- ✅ **Both ECDSA and EdDSA support** - Comprehensive algorithm coverage
+- ✅ **Unified structure** - **Both ECDSA and EdDSA use identical code structure and logging**
+- ✅ **Both ECDSA and EdDSA support** - Comprehensive algorithm coverage with consistent APIs
 
 ## Testing
 
@@ -266,12 +267,8 @@ Flags:
 │   ├── basic/             # ECDSA example programs
 │   └── eddsa/             # EdDSA example programs
 ├── pkg/
-│   ├── ecdsaaffine/       # ECDSA Go package
+│   ├── ecdsaaffine/       # ECDSA Go package (multi-phase brute-force, parsing, recovery)
 │   └── eddsaaffine/       # EdDSA Go package
-├── internal/
-│   ├── bruteforce/        # Multi-phase brute-force implementation (ECDSA)
-│   ├── parser/            # Signature parsing (JSON/CSV)
-│   └── recovery/          # Core recovery algorithm (ECDSA Equation 7)
 ├── scripts/               # Python scripts for fixture generation
 │   ├── flawed_signer.py   # ECDSA signature generator
 │   └── flawed_eddsa_signer.py  # EdDSA signature generator

@@ -1,7 +1,7 @@
-# ECDSA Nonce Brute-Force Strategy for Unknown Structures
+# ECDSA/EdDSA Nonce Brute-Force Strategy for Unknown Structures
 
 ## Overview
-This document outlines the optimal strategy for brute-forcing ECDSA nonces when the structure is unknown, based on real-world vulnerabilities (e.g., UpBit 2025 hack).
+This document outlines the optimal strategy for brute-forcing ECDSA and EdDSA nonces when the structure is unknown, based on real-world vulnerabilities (e.g., UpBit 2025 hack). **Both ECDSA and EdDSA packages use the same unified strategy and structure.**
 
 ## Multi-Phase Approach
 
@@ -209,10 +209,16 @@ Based on the UpBit 2025 hack pattern:
 
 ## Current Implementation
 
-The current code implements:
-- ✅ Phase 1 (common patterns)
-- ✅ Phase 2/3 (adaptive with a=1 priority)
-- ✅ Parallel processing
-- ✅ Early termination
+**Both ECDSA and EdDSA packages implement:**
+- ✅ Phase 0 (same nonce reuse detection - instant)
+- ✅ Phase 1 (common patterns - 31+ patterns)
+- ✅ Phase 2/3 (adaptive range search with a=1 priority)
+- ✅ Phase 4 (wide exhaustive search)
+- ✅ Parallel processing with configurable workers
+- ✅ Progress logging (updates every 5 seconds or 1M pairs)
+- ✅ Early termination when key is found
+- ✅ Unified structure and logging format
 - ⚠️ Could add: statistical pre-analysis, time-based pattern detection
+
+**Note:** Both packages use `log.Printf` for consistent logging and the same multi-phase strategy structure. The only differences are the curve-specific recovery formulas and signature formats.
 

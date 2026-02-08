@@ -1,17 +1,14 @@
 package main
 
 import (
-	"encoding/hex"
+	"context"
 	"flag"
 	"fmt"
-	"math/big"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/mahdiidarabi/ecdsa-affine/internal/bruteforce"
-	"github.com/mahdiidarabi/ecdsa-affine/internal/parser"
-	"github.com/mahdiidarabi/ecdsa-affine/internal/recovery"
+	"github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine"
 )
 
 func main() {
@@ -36,133 +33,94 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse signatures
-	fmt.Printf("Loading signatures from %s...\n", *signaturesFile)
-	var signatures []*parser.Signature
-	var err error
-
+	// Set up parser based on format
+	var parser ecdsaaffine.SignatureParser
 	if *format == "json" {
-		signatures, err = parser.ParseSignaturesFromJSON(*signaturesFile, "message", "r", "s", "z")
+		parser = &ecdsaaffine.JSONParser{
+			MessageField: "message",
+			RField:       "r",
+			SField:       "s",
+			ZField:       "z",
+		}
 	} else {
-		signatures, err = parser.ParseSignaturesFromCSV(*signaturesFile, "message", "r", "s", "z")
-	}
-
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading signatures: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("Loaded %d signatures\n", len(signatures))
-
-	if len(signatures) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: Need at least 2 signatures\n")
-		os.Exit(1)
-	}
-
-	// Parse public key if provided
-	var publicKeyBytes []byte
-	if *publicKey != "" {
-		var err error
-		publicKeyBytes, err = hex.DecodeString(strings.TrimPrefix(*publicKey, "0x"))
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing public key: %v\n", err)
-			os.Exit(1)
-		}
-		if len(publicKeyBytes) != 33 {
-			fmt.Fprintf(os.Stderr, "Error: Public key must be 33 bytes (compressed format)\n")
-			os.Exit(1)
+		parser = &ecdsaaffine.CSVParser{
+			MessageCol: "message",
+			RCol:       "r",
+			SCol:       "s",
+			ZCol:       "z",
 		}
 	}
 
-	// Convert signatures to recovery format
-	recoverySigs := make([]*recovery.Signature, len(signatures))
-	for i, sig := range signatures {
-		recoverySigs[i] = &recovery.Signature{
-			Z: sig.Z,
-			R: sig.R,
-			S: sig.S,
-		}
-	}
+	// Create client with parser
+	client := ecdsaaffine.NewClient().WithParser(parser)
+
+	ctx := context.Background()
 
 	// Recover key based on mode
 	if *knownA != 0 || *knownB != 0 {
 		// Known relationship
 		fmt.Printf("Using known relationship: k2 = %d*k1 + %d\n", *knownA, *knownB)
 
-		a := big.NewInt(int64(*knownA))
-		b := big.NewInt(int64(*knownB))
-
-		// Try all pairs
-		found := false
-		for i := 0; i < len(recoverySigs); i++ {
-			for j := i + 1; j < len(recoverySigs); j++ {
-				priv, err := recovery.RecoverPrivateKeyAffine(recoverySigs[i], recoverySigs[j], a, b)
-				if err != nil {
-					// Debug: uncomment to see errors
-					// fmt.Printf("  Pair (%d, %d): %v\n", i, j, err)
-					continue
-				}
-
-				found = true
-				fmt.Printf("\n[+] Recovered private key from signatures %d and %d:\n", i, j)
-				fmt.Printf("    Private key: %s\n", priv.String())
-
-				if len(publicKeyBytes) > 0 {
-					verified, err := recovery.VerifyRecoveredKey(priv, publicKeyBytes)
-					if err == nil && verified {
-						fmt.Println("    ✓ Verified against public key!")
-						return
-					} else {
-						if err != nil {
-							fmt.Printf("    ✗ Verification error: %v\n", err)
-						} else {
-							fmt.Println("    ✗ Does not match public key")
-						}
-						// Continue trying other pairs if verification fails
-					}
-				} else {
-					// No public key provided, just return the first recovered key
-					return
-				}
-			}
+		publicKeyStr := ""
+		if *publicKey != "" {
+			publicKeyStr = *publicKey
 		}
 
-		if !found {
-			fmt.Println("\n[-] Could not recover private key with known relationship")
+		result, err := client.RecoverKeyWithKnownRelationship(ctx, *signaturesFile, int64(*knownA), int64(*knownB), publicKeyStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
-		} else {
-			// Found key(s) but none verified
-			fmt.Println("\n[-] Recovered key(s) but none matched the provided public key")
-			os.Exit(1)
+		}
+
+		fmt.Printf("\n[+] Recovered private key from signatures %d and %d:\n", result.SignaturePair[0], result.SignaturePair[1])
+		fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
+		if result.Verified {
+			fmt.Println("    ✓ Verified against public key!")
 		}
 
 	} else if *smartBrute {
-		// Smart brute-force
-		result := bruteforce.SmartBruteForce(signatures, publicKeyBytes)
+		// Smart brute-force (uses default multi-phase strategy)
+		fmt.Printf("Loading signatures from %s...\n", *signaturesFile)
 
-		if result != nil {
-			fmt.Printf("\n[+] Successfully recovered private key!\n")
-			fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
-			fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", result.A.String(), result.B.String())
-			fmt.Printf("    Signature pair: (%d, %d)\n", result.SignaturePair[0], result.SignaturePair[1])
-			if result.Verified {
-				fmt.Println("    ✓ Verified against public key!")
-			}
-		} else {
-			fmt.Println("\n[-] Could not recover private key")
+		publicKeyStr := ""
+		if *publicKey != "" {
+			publicKeyStr = *publicKey
+		}
+
+		result, err := client.RecoverKey(ctx, *signaturesFile, publicKeyStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
+		}
+
+		fmt.Printf("\n[+] Successfully recovered private key!\n")
+		fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
+		fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", result.Relationship.A.String(), result.Relationship.B.String())
+		fmt.Printf("    Signature pair: (%d, %d)\n", result.SignaturePair[0], result.SignaturePair[1])
+		fmt.Printf("    Pattern: %s\n", result.Pattern)
+		if result.Verified {
+			fmt.Println("    ✓ Verified against public key!")
 		}
 
 	} else if *bruteForce {
 		// Brute-force - try common patterns first for efficiency
+		fmt.Printf("Loading signatures from %s...\n", *signaturesFile)
 		fmt.Println("Trying common patterns first (fast path)...")
-		commonResult := bruteforce.SmartBruteForce(signatures, publicKeyBytes)
-		if commonResult != nil {
+
+		publicKeyStr := ""
+		if *publicKey != "" {
+			publicKeyStr = *publicKey
+		}
+
+		// First try with default smart brute-force (common patterns)
+		result, err := client.RecoverKey(ctx, *signaturesFile, publicKeyStr)
+		if err == nil && result != nil {
 			fmt.Printf("\n[+] Successfully recovered private key!\n")
-			fmt.Printf("    Private key: %s\n", commonResult.PrivateKey.String())
-			fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", commonResult.A.String(), commonResult.B.String())
-			fmt.Printf("    Signature pair: (%d, %d)\n", commonResult.SignaturePair[0], commonResult.SignaturePair[1])
-			if commonResult.Verified {
+			fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
+			fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", result.Relationship.A.String(), result.Relationship.B.String())
+			fmt.Printf("    Signature pair: (%d, %d)\n", result.SignaturePair[0], result.SignaturePair[1])
+			fmt.Printf("    Pattern: %s\n", result.Pattern)
+			if result.Verified {
 				fmt.Println("    ✓ Verified against public key!")
 			}
 			return
@@ -170,6 +128,8 @@ func main() {
 
 		// If common patterns didn't work, use specified ranges
 		fmt.Println("Common patterns didn't work, using specified ranges...")
+
+		// Parse ranges
 		aMin, aMax, err := parseRange(*aRange)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing a-range: %v\n", err)
@@ -182,26 +142,33 @@ func main() {
 			os.Exit(1)
 		}
 
-		result := bruteforce.BruteForceAffineRelationshipParallel(
-			signatures,
-			publicKeyBytes,
-			[2]int{aMin, aMax},
-			[2]int{bMin, bMax},
-			*maxPairs,
-			*numWorkers,
-		)
+		// Create strategy with custom ranges
+		strategy := ecdsaaffine.NewSmartBruteForceStrategy().
+			WithRangeConfig(ecdsaaffine.RangeConfig{
+				ARange:     [2]int{aMin, aMax},
+				BRange:     [2]int{bMin, bMax},
+				MaxPairs:   *maxPairs,
+				NumWorkers: *numWorkers,
+				SkipZeroA:  true,
+			}).
+			WithPatternConfig(ecdsaaffine.PatternConfig{
+				IncludeCommonPatterns: false, // Skip common patterns, use only custom range
+			})
 
-		if result != nil {
-			fmt.Printf("\n[+] Successfully recovered private key!\n")
-			fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
-			fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", result.A.String(), result.B.String())
-			fmt.Printf("    Signature pair: (%d, %d)\n", result.SignaturePair[0], result.SignaturePair[1])
-			if result.Verified {
-				fmt.Println("    ✓ Verified against public key!")
-			}
-		} else {
-			fmt.Println("\n[-] Could not recover private key")
+		client = client.WithStrategy(strategy)
+
+		result, err = client.RecoverKey(ctx, *signaturesFile, publicKeyStr)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
+		}
+
+		fmt.Printf("\n[+] Successfully recovered private key!\n")
+		fmt.Printf("    Private key: %s\n", result.PrivateKey.String())
+		fmt.Printf("    Relationship: k2 = %s*k1 + %s\n", result.Relationship.A.String(), result.Relationship.B.String())
+		fmt.Printf("    Signature pair: (%d, %d)\n", result.SignaturePair[0], result.SignaturePair[1])
+		if result.Verified {
+			fmt.Println("    ✓ Verified against public key!")
 		}
 
 	} else {

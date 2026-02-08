@@ -8,6 +8,8 @@ This directory contains Python scripts for generating test fixtures and demonstr
 
 Generates ECDSA (secp256k1) signatures with various nonce flaws for testing the recovery tool.
 
+**Structure:** This script follows the same structure as `flawed_eddsa_signer.py` - all signing methods delegate to `sign_with_affine_nonces` for consistency.
+
 **Usage:**
 ```bash
 python3 scripts/flawed_signer.py
@@ -17,11 +19,14 @@ python3 scripts/flawed_signer.py
 - `fixtures/test_signatures_same_nonce.json` - Nonce reuse (k2 = k1)
 - `fixtures/test_signatures_counter.json` - Counter-based (k2 = k1 + 1)
 - `fixtures/test_signatures_affine.json` - Affine relationship (k2 = 2*k1 + 1)
+- `fixtures/test_signatures_hardcoded_step.json` - Hardcoded step (k2 = k1 + 12345)
 - `fixtures/test_key_info.json` - Private/public key information
 
 ### `flawed_eddsa_signer.py` - EdDSA Signature Generator
 
 Generates EdDSA (Ed25519) signatures with various nonce flaws for testing the EdDSA key recovery tool. 
+
+**Structure:** This script serves as the reference implementation - `flawed_signer.py` (ECDSA) follows the same structure for consistency.
 
 **Important:** Standard EdDSA uses deterministic nonces (SHA-512(private_key || message)) and is secure. This script simulates **flawed implementations** that use random nonces instead, making them vulnerable to ECDSA-style affine nonce attacks. This is useful for:
 - Testing the EdDSA key recovery implementation

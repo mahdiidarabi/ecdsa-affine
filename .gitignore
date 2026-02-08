@@ -40,3 +40,7 @@ fixtures/*.json
 fixtures/*.yaml
 fixtures/*.txt
 
+# Signature data directories
+bitcoin_signatures/
+solana_signatures/
+

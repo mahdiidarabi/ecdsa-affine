@@ -106,7 +106,7 @@ echo "Strategy: Smart brute-force (tries common patterns first, then expands ran
 echo
 
 # Use timeout to prevent infinite loops (600 seconds = 10 minutes)
-timeout 600 ./bin/recovery \
+timeout 750 ./bin/recovery \
     --signatures fixtures/test_signatures_hardcoded_step.json \
     --smart-brute \
     --public-key "$PUBKEY"

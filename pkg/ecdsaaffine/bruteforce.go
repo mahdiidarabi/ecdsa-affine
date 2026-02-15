@@ -566,35 +566,7 @@ func (s *SmartBruteForceStrategy) rangeSearch(ctx context.Context, signatures []
 	}
 }
 
-// getCommonPatterns returns the list of common patterns to try.
-// Matches EdDSA common patterns for consistency.
+// getCommonPatterns returns the list of common patterns to try (uses shared default).
 func (s *SmartBruteForceStrategy) getCommonPatterns() []Pattern {
-	return []Pattern{
-		{big.NewInt(1), big.NewInt(0), "same_nonce", 1},
-		{big.NewInt(1), big.NewInt(1), "counter_+1", 2},
-		{big.NewInt(1), big.NewInt(-1), "counter_-1", 2},
-		{big.NewInt(1), big.NewInt(2), "counter_+2", 3},
-		{big.NewInt(1), big.NewInt(-2), "counter_-2", 3},
-		{big.NewInt(1), big.NewInt(3), "counter_+3", 3},
-		{big.NewInt(1), big.NewInt(-3), "counter_-3", 3},
-		{big.NewInt(1), big.NewInt(4), "counter_+4", 3},
-		{big.NewInt(1), big.NewInt(-4), "counter_-4", 3},
-		{big.NewInt(1), big.NewInt(5), "counter_+5", 3},
-		{big.NewInt(1), big.NewInt(-5), "counter_-5", 3},
-		{big.NewInt(1), big.NewInt(8), "step_8", 4},
-		{big.NewInt(1), big.NewInt(16), "step_16", 4},
-		{big.NewInt(1), big.NewInt(32), "step_32", 4},
-		{big.NewInt(1), big.NewInt(10), "step_10", 4},
-		{big.NewInt(1), big.NewInt(71), "step_71", 4}, // Common in test fixtures
-		{big.NewInt(1), big.NewInt(73), "step_73", 4}, // Common in test fixtures
-		{big.NewInt(1), big.NewInt(97), "step_97", 4}, // Common in test fixtures
-		{big.NewInt(1), big.NewInt(100), "step_100", 4},
-		{big.NewInt(1), big.NewInt(1000), "step_1000", 4},
-		{big.NewInt(1), big.NewInt(10000), "step_10000", 4},
-		{big.NewInt(2), big.NewInt(0), "multiply_2", 5},
-		{big.NewInt(2), big.NewInt(1), "multiply_2_+1", 5},
-		{big.NewInt(3), big.NewInt(0), "multiply_3", 5},
-		{big.NewInt(4), big.NewInt(0), "multiply_4", 5},
-		{big.NewInt(-1), big.NewInt(0), "negate", 6},
-	}
+	return defaultCommonPatterns()
 }

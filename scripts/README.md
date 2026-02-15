@@ -1,6 +1,6 @@
 # Scripts Directory
 
-This directory contains Python scripts for generating test fixtures and demonstrating flawed signature generation.
+The project is a **Go package**; all recovery logic is in Go. This directory contains **Python scripts used only to generate test fixtures** (vulnerable signatures for ECDSA and EdDSA) and to demonstrate flawed signature generation. Python is not required to use the Go packages or the recovery tool.
 
 ## Scripts
 

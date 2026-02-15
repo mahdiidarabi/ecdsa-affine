@@ -13,13 +13,11 @@
 // Basic Usage:
 //
 //	client := eddsaaffine.NewClient()
-//	result, err := client.RecoverKey(context.Background(), "path/to/signatures.json", "public_key_hex")
-//	if err != nil {
-//		log.Fatalf("Recovery failed: %v", err)
-//	}
-//	fmt.Printf("Recovered key: %s\n", result.PrivateKey.Text(16))
+//	result, err := client.RecoverKey(ctx, "path/to/signatures.json", "public_key_hex")
+//	// Or from in-memory signatures (e.g. your own parser):
+//	// result, err := client.RecoverKeyFromSignatures(ctx, signatures, "public_key_hex")
 //
-// Customizing the strategy:
+// Customizing the strategy (defaults are sensible; override as needed):
 //
 //	strategy := eddsaaffine.NewSmartBruteForceStrategy().
 //		WithRangeConfig(eddsaaffine.RangeConfig{
@@ -28,9 +26,10 @@
 //			NumWorkers: 8,
 //		}).
 //		WithPatternConfig(eddsaaffine.PatternConfig{
-//			CustomPatterns: []eddsaaffine.Pattern{
-//				{A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step"},
-//			},
+//			CustomPatterns: append(eddsaaffine.CommonPatterns(), eddsaaffine.Pattern{
+//				A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step", Priority: 1,
+//			}),
+//			IncludeCommonPatterns: false,
 //		})
 //	client = eddsaaffine.NewClient().WithStrategy(strategy)
 //

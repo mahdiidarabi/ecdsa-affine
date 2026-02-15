@@ -2,6 +2,8 @@
 
 **Breaking ECDSA/EdDSA with Two Affinely Related Nonces** - A Go implementation of the key recovery attack described in [arXiv:2504.13737](2504.13737v1.pdf) by Jamie Gilchrist, William J. Buchanan, and Keir Finlow-Bates.
 
+**This is a Go package.** All core logic (recovery, brute-force, parsing) is implemented in Go. Python is used only to generate test fixtures (vulnerable signatures) for testing; it is not required to use the package or the recovery tool.
+
 ## 🔬 Overview
 
 **This is a security research tool** for analyzing cryptographic vulnerabilities in ECDSA and EdDSA signature implementations. It recovers private keys from signatures with affinely related nonces, enabling researchers to:

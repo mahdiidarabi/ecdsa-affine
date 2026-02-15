@@ -34,7 +34,7 @@ func (c *Client) WithParser(parser SignatureParser) *Client {
 	return c
 }
 
-// RecoverKey attempts to recover a private key from signatures using the configured strategy.
+// RecoverKey attempts to recover a private key from signatures in a file.
 //
 // Args:
 //   - ctx: Context for cancellation.
@@ -44,19 +44,24 @@ func (c *Client) WithParser(parser SignatureParser) *Client {
 // Returns:
 //   - RecoveryResult if successful, error otherwise.
 func (c *Client) RecoverKey(ctx context.Context, source string, publicKeyHex string) (*RecoveryResult, error) {
-	// Parse signatures
 	signatures, err := c.parser.ParseSignatures(source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse signatures: %w", err)
 	}
+	return c.RecoverKeyFromSignatures(ctx, signatures, publicKeyHex)
+}
 
+// RecoverKeyFromSignatures attempts to recover a private key from in-memory signatures.
+// Use this when you have already parsed signatures (e.g. from your own parser or API).
+// Public key is optional; when provided, the recovered key is verified.
+func (c *Client) RecoverKeyFromSignatures(ctx context.Context, signatures []*Signature, publicKeyHex string) (*RecoveryResult, error) {
 	if len(signatures) < 2 {
 		return nil, fmt.Errorf("need at least 2 signatures, got %d", len(signatures))
 	}
 
-	// Parse public key if provided
 	var publicKey []byte
 	if publicKeyHex != "" {
+		var err error
 		publicKey, err = hex.DecodeString(strings.TrimPrefix(publicKeyHex, "0x"))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse public key: %w", err)
@@ -66,12 +71,10 @@ func (c *Client) RecoverKey(ctx context.Context, source string, publicKeyHex str
 		}
 	}
 
-	// Search for key
 	result := c.strategy.Search(ctx, signatures, publicKey)
 	if result == nil {
 		return nil, fmt.Errorf("failed to recover private key")
 	}
-
 	return result, nil
 }
 

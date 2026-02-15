@@ -9,16 +9,15 @@
 //
 //	import "github.com/mahdiidarabi/ecdsa-affine/pkg/ecdsaaffine"
 //
-//	// Create a client with default settings
+//	// Create a client with default settings (sensible defaults; customize as needed)
 //	client := ecdsaaffine.NewClient()
 //
-//	// Recover key with smart brute-force
+//	// Recover from file
 //	result, err := client.RecoverKey(ctx, "signatures.json", "03...")
-//	if err != nil {
-//	    log.Fatal(err)
-//	}
 //
-//	fmt.Printf("Recovered key: %s\n", result.PrivateKey.Text(16))
+//	// Or recover from in-memory signatures (e.g. your own parser, blockchain)
+//	signatures, _ := client.parser.ParseSignatures("signatures.json") // or your parser
+//	result, err := client.RecoverKeyFromSignatures(ctx, signatures, "03...")
 //
 // # Customization
 //
@@ -32,10 +31,10 @@
 //	        NumWorkers: 16,
 //	    }).
 //	    WithPatternConfig(ecdsaaffine.PatternConfig{
-//	        CustomPatterns: []ecdsaaffine.Pattern{
-//	            {A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step", Priority: 1},
-//	        },
-//	        IncludeCommonPatterns: true,
+//	        CustomPatterns: append(ecdsaaffine.CommonPatterns(), ecdsaaffine.Pattern{
+//	            A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step", Priority: 1,
+//	        }),
+//	        IncludeCommonPatterns: false, // use only the patterns above
 //	    })
 //
 //	client := ecdsaaffine.NewClient().WithStrategy(strategy)

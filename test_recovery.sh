@@ -3,7 +3,7 @@
 #
 # This script tests the ECDSA key recovery functionality by:
 # 1. Generating test fixtures with vulnerable nonce patterns
-# 2. Running the recovery tool with smart brute-force strategy
+# 2. Running the ECDSA recovery example program
 # 3. Verifying the recovered private key matches the expected key
 #
 # Usage: ./test_recovery.sh
@@ -81,35 +81,19 @@ if [ -z "$PUBKEY" ]; then
 fi
 echo "✓ Public key: $PUBKEY"
 
-# Step 4: Check if binary exists
-# Build the recovery CLI tool if it doesn't exist
+# Step 4: Run recovery using the example program
+# Execute the ECDSA recovery example program
+# Same pattern as EdDSA: use the Go example program instead of a compiled binary
 echo
-echo "Step 4: Building recovery tool (if needed)..."
-if [ ! -f "./bin/recovery" ]; then
-    echo "Building recovery tool..."
-    make build
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to build recovery tool"
-        echo "Make sure Go 1.21+ is installed"
-        exit 1
-    fi
-fi
-echo "✓ Recovery binary exists"
-
-# Step 5: Run recovery
-# Execute the recovery tool with smart brute-force strategy
-# This will test various nonce patterns and attempt to recover the private key
-echo
-echo "Step 5: Running ECDSA key recovery..."
-echo "Command: ./bin/recovery --signatures fixtures/test_signatures_hardcoded_step.json --smart-brute --public-key $PUBKEY"
-echo "Strategy: Smart brute-force (tries common patterns first, then expands range)"
+echo "Step 4: Running ECDSA key recovery..."
+echo "Command: go run examples/basic/main.go fixtures/test_signatures_hardcoded_step.json $PUBKEY"
+echo "Strategy: Uses smart brute-force to find nonce patterns"
 echo
 
-# Use timeout to prevent infinite loops (600 seconds = 10 minutes)
-timeout 750 ./bin/recovery \
-    --signatures fixtures/test_signatures_hardcoded_step.json \
-    --smart-brute \
-    --public-key "$PUBKEY"
+# Use timeout to prevent infinite loops (750 seconds)
+timeout 750 go run examples/basic/main.go \
+    fixtures/test_signatures_hardcoded_step.json \
+    "$PUBKEY"
 
 EXIT_CODE=$?
 echo
@@ -117,7 +101,7 @@ echo "=== Exit code: $EXIT_CODE ==="
 
 # Handle different exit codes
 if [ $EXIT_CODE -eq 124 ]; then
-    echo "WARNING: Command timed out after 600 seconds (10 minutes)"
+    echo "WARNING: Command timed out after 750 seconds"
     echo "The recovery process may need more time or the signatures may not be vulnerable"
 elif [ $EXIT_CODE -eq 0 ]; then
     echo "✓ Recovery completed successfully"

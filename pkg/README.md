@@ -1,6 +1,8 @@
 # ECDSA/EdDSA Affine Packages
 
-This repository provides two Go packages for recovering private keys from signatures with affinely related nonces:
+This repository is a **Go package**. It provides two Go packages for recovering private keys from signatures with affinely related nonces. Python is used only in the project to generate test fixtures (vulnerable signatures); it is not required to use these packages.
+
+**Packages:**
 
 1. **`pkg/ecdsaaffine`** - ECDSA (secp256k1) key recovery
 2. **`pkg/eddsaaffine`** - EdDSA (Ed25519) key recovery for flawed implementations
@@ -100,16 +102,36 @@ strategy := ecdsaaffine.NewSmartBruteForceStrategy().
 
 ### Pattern Configuration
 
-Add custom patterns to test:
+Add custom patterns or use/extend the built-in list:
 
 ```go
+// Option 1: Add your patterns alongside built-in ones
 strategy := ecdsaaffine.NewSmartBruteForceStrategy().
     WithPatternConfig(ecdsaaffine.PatternConfig{
         CustomPatterns: []ecdsaaffine.Pattern{
             {A: big.NewInt(1), B: big.NewInt(12345), Name: "custom_step", Priority: 1},
         },
-        IncludeCommonPatterns: true, // Include built-in common patterns
+        IncludeCommonPatterns: true,
     })
+
+// Option 2: Use only your patterns (e.g. extend CommonPatterns and disable built-in)
+allPatterns := append(ecdsaaffine.CommonPatterns(), ecdsaaffine.Pattern{
+    A: big.NewInt(1), B: big.NewInt(999), Name: "my_step", Priority: 1,
+})
+strategy := ecdsaaffine.NewSmartBruteForceStrategy().
+    WithPatternConfig(ecdsaaffine.PatternConfig{
+        CustomPatterns: allPatterns,
+        IncludeCommonPatterns: false,
+    })
+```
+
+### In-memory signatures
+
+If you already have parsed signatures (e.g. from your own parser, blockchain, or API), use `RecoverKeyFromSignatures` so you are not tied to file paths:
+
+```go
+signatures, _ := myParser.Parse(someSource) // your parser
+result, err := client.RecoverKeyFromSignatures(ctx, signatures, publicKeyHex)
 ```
 
 ## Examples

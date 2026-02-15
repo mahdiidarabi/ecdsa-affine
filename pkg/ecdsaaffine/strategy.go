@@ -71,3 +71,42 @@ func DefaultPatternConfig() PatternConfig {
 	}
 }
 
+// CommonPatterns returns a copy of the built-in patterns used by SmartBruteForceStrategy.
+// Researchers can use this to extend or reorder patterns: append your own to CustomPatterns
+// or build a new PatternConfig with IncludeCommonPatterns: false and only your patterns.
+func CommonPatterns() []Pattern {
+	return append([]Pattern(nil), defaultCommonPatterns()...)
+}
+
+// defaultCommonPatterns returns the built-in pattern list (same as SmartBruteForceStrategy).
+func defaultCommonPatterns() []Pattern {
+	return []Pattern{
+		{A: big.NewInt(1), B: big.NewInt(0), Name: "same_nonce", Priority: 1},
+		{A: big.NewInt(1), B: big.NewInt(1), Name: "counter_+1", Priority: 2},
+		{A: big.NewInt(1), B: big.NewInt(-1), Name: "counter_-1", Priority: 2},
+		{A: big.NewInt(1), B: big.NewInt(2), Name: "counter_+2", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(-2), Name: "counter_-2", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(3), Name: "counter_+3", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(-3), Name: "counter_-3", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(4), Name: "counter_+4", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(-4), Name: "counter_-4", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(5), Name: "counter_+5", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(-5), Name: "counter_-5", Priority: 3},
+		{A: big.NewInt(1), B: big.NewInt(8), Name: "step_8", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(16), Name: "step_16", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(32), Name: "step_32", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(10), Name: "step_10", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(71), Name: "step_71", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(73), Name: "step_73", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(97), Name: "step_97", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(100), Name: "step_100", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(1000), Name: "step_1000", Priority: 4},
+		{A: big.NewInt(1), B: big.NewInt(10000), Name: "step_10000", Priority: 4},
+		{A: big.NewInt(2), B: big.NewInt(0), Name: "multiply_2", Priority: 5},
+		{A: big.NewInt(2), B: big.NewInt(1), Name: "multiply_2_+1", Priority: 5},
+		{A: big.NewInt(3), B: big.NewInt(0), Name: "multiply_3", Priority: 5},
+		{A: big.NewInt(4), B: big.NewInt(0), Name: "multiply_4", Priority: 5},
+		{A: big.NewInt(-1), B: big.NewInt(0), Name: "negate", Priority: 6},
+	}
+}
+

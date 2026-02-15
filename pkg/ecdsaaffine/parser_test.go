@@ -1,13 +1,14 @@
 package ecdsaaffine
 
 import (
+	"path/filepath"
 	"testing"
 )
 
 func TestJSONParser_ParseSignatures(t *testing.T) {
-	parser := &JSONParser{}
+	parser := &JSONParser{ZField: "z"}
 
-	signatures, err := parser.ParseSignatures("../../fixtures/test_signatures_counter.json")
+	signatures, err := parser.ParseSignatures(filepath.Join(fixturesDir(), "test_signatures_counter.json"))
 	if err != nil {
 		t.Fatalf("Failed to parse signatures: %v", err)
 	}
@@ -44,7 +45,7 @@ func TestJSONParser_ParseSignatures(t *testing.T) {
 }
 
 func TestJSONParser_ParseSignatures_AllFixtures(t *testing.T) {
-	parser := &JSONParser{}
+	parser := &JSONParser{ZField: "z"}
 	fixtures := []string{
 		"test_signatures_same_nonce.json",
 		"test_signatures_counter.json",
@@ -55,7 +56,7 @@ func TestJSONParser_ParseSignatures_AllFixtures(t *testing.T) {
 
 	for _, fixture := range fixtures {
 		t.Run(fixture, func(t *testing.T) {
-			signatures, err := parser.ParseSignatures("../../fixtures/" + fixture)
+			signatures, err := parser.ParseSignatures(filepath.Join(fixturesDir(), fixture))
 			if err != nil {
 				t.Fatalf("Failed to parse %s: %v", fixture, err)
 			}
@@ -75,7 +76,7 @@ func TestJSONParser_ParseSignatures_CustomFields(t *testing.T) {
 		ZField:       "z",
 	}
 
-	signatures, err := parser.ParseSignatures("../../fixtures/test_signatures_counter.json")
+	signatures, err := parser.ParseSignatures(filepath.Join(fixturesDir(), "test_signatures_counter.json"))
 	if err != nil {
 		t.Fatalf("Failed to parse with custom fields: %v", err)
 	}
@@ -88,7 +89,7 @@ func TestJSONParser_ParseSignatures_CustomFields(t *testing.T) {
 func TestJSONParser_ParseSignatures_InvalidFile(t *testing.T) {
 	parser := &JSONParser{}
 
-	_, err := parser.ParseSignatures("../../fixtures/nonexistent.json")
+	_, err := parser.ParseSignatures(filepath.Join(fixturesDir(), "nonexistent.json"))
 	if err == nil {
 		t.Error("Expected error for nonexistent file")
 	}
@@ -98,7 +99,7 @@ func TestJSONParser_ParseSignatures_InvalidJSON(t *testing.T) {
 	parser := &JSONParser{}
 
 	// Try to parse a file that doesn't exist or has invalid JSON
-	_, err := parser.ParseSignatures("../../fixtures/test_key_info.json")
+	_, err := parser.ParseSignatures(filepath.Join(fixturesDir(), "test_key_info.json"))
 	// This might succeed if the file has valid JSON structure, so we just check it doesn't crash
 	if err != nil {
 		t.Logf("Expected error for invalid signature format: %v", err)

@@ -3,7 +3,6 @@ package ecdsaaffine
 import (
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
@@ -112,16 +111,14 @@ func VerifyRecoveredKey(privateKey *big.Int, publicKeyBytes []byte) (bool, error
 	// Serialize as compressed
 	recoveredPubKey := pubKey.SerializeCompressed()
 
-	// Compare with provided public key
+	// Compare with provided public key (mismatch is a normal result, not an error)
 	if len(recoveredPubKey) != len(publicKeyBytes) {
-		return false, fmt.Errorf("public key length mismatch: recovered=%d, expected=%d", len(recoveredPubKey), len(publicKeyBytes))
+		return false, nil
 	}
-
 	for i := range publicKeyBytes {
 		if recoveredPubKey[i] != publicKeyBytes[i] {
-			return false, fmt.Errorf("public key mismatch at byte %d: recovered=%02x, expected=%02x", i, recoveredPubKey[i], publicKeyBytes[i])
+			return false, nil
 		}
 	}
-
 	return true, nil
 }

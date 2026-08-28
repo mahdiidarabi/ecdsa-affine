@@ -1,0 +1,102 @@
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:47:34
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: false
+  Signature pair: [0, 2]
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:47:51
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: false
+  Signature pair: [0, 2]
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:48:58
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: false
+  Signature pair: [0, 2]
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:49:19
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: false
+  Signature pair: [0, 2]
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:49:48
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: false
+  Signature pair: [0, 2]
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:50:28
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: true
+  Signature pair: [0, 2]
+
+✅ Verified key found! Terminating.
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:50:36
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: true
+  Signature pair: [0, 2]
+
+✅ Verified key found! Terminating.
+
+================================================================================
+Recovery run for: bitcoin_signatures/processed_signatures/1FaapwdwYVVBiV6Qvkis88c2KHPoxX1Jb1.json
+Timestamp: 2026-01-06 16:51:24
+================================================================================
+
+✓ Recovered private key!
+  Key: 4d710e124f7c0b6544f727c02d3b37a432dd62ccfd269f72bc030ef0bf123256
+  Relationship: k2 = 1*k1 + 0
+  Pattern: same_nonce_reuse
+  Verified: true
+  Signature pair: [0, 2]
+
+✅ Verified key found! Terminating.
